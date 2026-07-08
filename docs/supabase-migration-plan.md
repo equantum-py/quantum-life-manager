@@ -79,8 +79,12 @@ Si `VITE_DATA_MODE=supabase` está activo pero la aplicación detecta que faltan
   - **Validación Mock**: El objetivo primario es que la pantalla no cambie de apariencia y que todas las acciones asíncronas (crear, editar, borrar, completar) sigan reaccionando con la inmediatez de siempre usando `localStorage`.
   - **Validación Futura (Supabase)**: En el futuro, cambiar `VITE_DATA_MODE=supabase` debería hidratar la UI con datos vivos de PostgreSQL. La UI (TasksPage) ya incluye manejo de `loading` y `error`, por lo que está lista para enfrentar la latencia de la red.
   - **Pendientes de migración**: Faltan por migrar la Agenda, las Notas, los Proyectos y refactorizar el Auth local al Supabase Auth.
-- **Fase 2.5**: Migrar Agenda y Reuniones.
-- **Fase 2.6**: Migrar Notas.
+- **Fase 2.5 y 2.6**: Migración de Agenda y Notas al Repository Layer.
+  - Se replicó el éxito de Tareas. `AgendaPage.tsx` ahora consume exclusivamente `meetingRepository`, y `NotesPage.tsx` consume `noteRepository`.
+  - Ambas pantallas implementan manejo de estado asincrónico real (`loading`, `error`) preparándose para la latencia que traerá la nube.
+  - El modo de repliegue (*fallback*) `VITE_DATA_MODE=mock` se mantiene intacto, persistiendo todo el uso diario en `localStorage`.
+  - **Pendientes de migración**: Aún falta refactorizar los Proyectos (`ProjectsPage`), las Secciones estáticas, el Dashboard principal y, finalmente, reemplazar el sistema de autenticación local por Supabase Auth.
+- **Fase 2.7**: Migrar Proyectos.
 - **Fase 2.7**: Migrar Proyectos.
 - **Fase 2.8**: Conectar la lógica del simulador WhatsApp (`/whatsapp-test`) para que inserte en las tablas reales de `ai_classifications` en lugar de sólo imprimir en pantalla.
 
