@@ -10,6 +10,7 @@ const links = [
   ['/sections', 'Secciones'],
   ['/notes', 'Notas'],
   ['/settings', 'Ajustes'],
+  ['/whatsapp-test', 'WhatsApp Simulator'],
 ];
 
 export function AppLayout() {

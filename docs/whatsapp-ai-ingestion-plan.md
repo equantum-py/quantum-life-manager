@@ -103,6 +103,7 @@ Payload:
 
 ## 11. Fases de Implementación
 1. **Fase 1: Estructura Local (Actual)**. Documentación técnica y generación de tipos TypeScript en el repositorio (`src/types/whatsapp.ts`).
-2. **Fase 2: Infraestructura Supabase**. Creación del proyecto Supabase, migración de los datos del LocalStorage a tablas reales, autenticación real.
-3. **Fase 3: Edge Function Echo**. Configurar cuenta de Meta Developers, registrar Webhook en Supabase Edge Function, y crear un bot "eco" que responda exactamente lo que Derlis envía.
-4. **Fase 4: IA Ingestion & Producción**. Conectar la Edge function con OpenAI Structured Outputs, parsear, guardar en base de datos de manera oficial y manejar casos ambiguos.
+2. **Fase 1.5: Simulador Local de Clasificación**. Creación de una capa interna simulada (`/whatsapp-test`) que permita probar la ingesta inteligente, la heurística de clasificación y la transformación de datos sin conectar aún Meta Cloud API ni la infraestructura real. Esto permite validar la lógica de IA en un entorno controlado.
+3. **Fase 2: Infraestructura Supabase**. Creación del proyecto Supabase, migración de los datos del LocalStorage a tablas reales, autenticación real.
+4. **Fase 3: Edge Function Echo**. Configurar cuenta de Meta Developers, registrar Webhook en Supabase Edge Function, y crear un bot "eco" que responda exactamente lo que Derlis envía.
+5. **Fase 4: IA Ingestion & Producción**. Conectar la Edge function con OpenAI Structured Outputs, parsear, guardar en base de datos de manera oficial y manejar casos ambiguos.
