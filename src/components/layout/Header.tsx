@@ -7,14 +7,14 @@ export function Header() {
   const user = authService.current();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#F8FAFC]/95 px-4 pb-4 pt-5 backdrop-blur md:px-8">
+    <header className="sticky top-0 z-30 border-b border-white/60 bg-white/50 px-4 pb-4 pt-5 backdrop-blur-xl md:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[13px] font-bold capitalize tracking-wide text-slate-500 md:text-sm">
+          <p className="text-[13px] font-medium capitalize tracking-wide text-slate-500 md:text-sm">
             {prettyDate(new Date())}
           </p>
 
-          <h1 className="truncate text-2xl font-black leading-tight tracking-[-0.03em] text-slate-950 md:text-3xl">
+          <h1 className="truncate text-[22px] font-bold leading-tight tracking-tight text-slate-900 md:text-3xl">
             Hola, {user?.name.split(' ')[0]}
           </h1>
         </div>

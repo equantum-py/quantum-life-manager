@@ -14,7 +14,7 @@ const links = [
 
 export function AppLayout() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen">
       <Header />
 
       <div className="mx-auto flex h-full max-w-6xl">

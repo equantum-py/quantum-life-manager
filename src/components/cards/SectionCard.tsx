@@ -4,11 +4,11 @@ import * as Icons from 'lucide-react';
 import { Section } from '../../types';
 
 const colorStyles = {
-  rose: 'bg-rose-50 text-rose-700 ring-rose-100',
-  amber: 'bg-amber-50 text-amber-700 ring-amber-100',
-  blue: 'bg-blue-50 text-blue-700 ring-blue-100',
-  violet: 'bg-violet-50 text-violet-700 ring-violet-100',
-  emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+  rose: 'bg-rose-100/50 text-rose-600 ring-rose-200/50',
+  amber: 'bg-amber-100/50 text-amber-600 ring-amber-200/50',
+  blue: 'bg-blue-100/50 text-blue-600 ring-blue-200/50',
+  violet: 'bg-violet-100/50 text-violet-600 ring-violet-200/50',
+  emerald: 'bg-emerald-100/50 text-emerald-600 ring-emerald-200/50',
 };
 
 export function SectionCard({
@@ -30,7 +30,7 @@ export function SectionCard({
   return (
     <Link
       to={`/sections/${section.id}`}
-      className="block rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+      className="block rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-all hover:bg-white/80 active:scale-[0.98]"
     >
       <div className="flex items-center gap-4">
         <span className={`grid h-16 w-16 shrink-0 place-items-center rounded-3xl ring-1 ${color}`}>
@@ -39,7 +39,7 @@ export function SectionCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-[20px] font-black tracking-[-0.02em] text-slate-950">
+            <h3 className="truncate text-[20px] font-semibold tracking-tight text-slate-900">
               {section.name}
             </h3>
 
@@ -48,14 +48,14 @@ export function SectionCard({
             )}
           </div>
 
-          <p className="mt-1 line-clamp-2 text-[15px] leading-relaxed text-slate-500">
+          <p className="mt-1 line-clamp-2 text-[15px] font-normal leading-relaxed text-slate-500">
             {section.description}
           </p>
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="text-[28px] font-black text-slate-950">{pending}</p>
-          <p className="text-[13px] font-bold text-slate-400">pend.</p>
+          <p className="text-[28px] font-bold text-slate-900">{pending}</p>
+          <p className="text-[13px] font-medium text-slate-400">pend.</p>
         </div>
       </div>
     </Link>

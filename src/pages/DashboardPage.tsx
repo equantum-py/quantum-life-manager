@@ -125,24 +125,56 @@ function MobileDashboard({
 }) {
   return (
     <div className="space-y-8 md:hidden">
-      <section className="rounded-[2.5rem] bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 p-7 text-white shadow-soft">
-        <p className="text-[15px] font-bold tracking-wide text-blue-200">Tu día de hoy</p>
+      <section className="space-y-4">
+        <div className="mb-2">
+          <h2 className="text-[24px] font-bold tracking-tight text-slate-900">
+            Tus áreas
+          </h2>
+          <p className="text-[15px] font-medium text-slate-500">
+            Organizá tu día desde cada parte de tu vida.
+          </p>
+        </div>
 
-        <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">
-          Hola, {userName}
-        </h2>
-
-        <p className="mt-3 text-[16px] leading-relaxed text-blue-50">
-          Tenés {todayTasks.length} tareas para hoy, {overdueTasks.length}{' '}
-          vencida{overdueTasks.length === 1 ? '' : 's'} y {nextMeetingTitle}.
-        </p>
+        {sections.map((section) => (
+          <SectionCard
+            key={section.id}
+            section={section}
+            pending={
+              todayTasks.filter((task) => task.sectionId === section.id).length
+            }
+            hasAlert={overdueTasks.some(
+              (task) => task.sectionId === section.id
+            )}
+          />
+        ))}
       </section>
 
-      <PriorityCard task={priorityTask} />
+      <section>
+        <h2 className="mb-4 text-[20px] font-bold tracking-tight text-slate-900">
+          Resumen de hoy
+        </h2>
+        <div className="rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+          <h3 className="text-[18px] font-semibold text-slate-900">
+            Hola, {userName}
+          </h3>
+          <p className="mt-2 text-[15px] leading-relaxed text-slate-600">
+            Tenés <strong className="font-semibold text-blue-700">{todayTasks.length} tareas</strong> para hoy,{' '}
+            <strong className="font-semibold text-red-600">{overdueTasks.length} vencida{overdueTasks.length !== 1 && 's'}</strong> y{' '}
+            <strong className="font-semibold text-violet-700">{nextMeetingTitle}</strong>.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
+          Prioridad ahora
+        </h2>
+        <PriorityCard task={priorityTask} />
+      </section>
 
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
+          <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
             Acciones rápidas
           </h2>
         </div>
@@ -171,11 +203,9 @@ function MobileDashboard({
         </div>
       </section>
 
-      <MobileStatScroller stats={stats} />
-
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
+          <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
             Próximas tareas
           </h2>
 
@@ -191,7 +221,7 @@ function MobileDashboard({
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
+          <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
             Próximas reuniones
           </h2>
 
@@ -208,7 +238,7 @@ function MobileDashboard({
       {mainAlert && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
+            <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
               Alerta principal
             </h2>
 
@@ -221,24 +251,6 @@ function MobileDashboard({
         </section>
       )}
 
-      <section className="space-y-4">
-        <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
-          Áreas
-        </h2>
-
-        {sections.map((section) => (
-          <SectionCard
-            key={section.id}
-            section={section}
-            pending={
-              todayTasks.filter((task) => task.sectionId === section.id).length
-            }
-            hasAlert={overdueTasks.some(
-              (task) => task.sectionId === section.id
-            )}
-          />
-        ))}
-      </section>
     </div>
   );
 }
