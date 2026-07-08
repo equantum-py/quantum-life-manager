@@ -1,0 +1,2 @@
+import { useEffect, useState } from 'react';import { storageService } from '../services/storageService';
+export function useLocalCollection<T extends {id:string}>(key:string,initial:T[]){const [items,setItems]=useState<T[]>(()=>storageService.get(key,initial));useEffect(()=>storageService.set(key,items),[key,items]);return {items,setItems,add:(item:T)=>setItems(v=>[item,...v]),update:(id:string,item:Partial<T>)=>setItems(v=>v.map(x=>x.id===id?{...x,...item}:x)),remove:(id:string)=>setItems(v=>v.filter(x=>x.id!==id))};}

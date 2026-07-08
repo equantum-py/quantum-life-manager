@@ -1,0 +1,3 @@
+import { NavLink, Outlet } from 'react-router-dom';import { Header } from './Header';import { MobileBottomNav } from './MobileBottomNav';
+const links=[['/dashboard','Inicio'],['/tasks','Tareas'],['/agenda','Agenda'],['/alerts','Alertas'],['/sections','Secciones'],['/notes','Notas'],['/settings','Ajustes']];
+export function AppLayout(){return <div><Header/><div className="mx-auto flex max-w-6xl"><aside className="hidden w-56 shrink-0 p-4 md:block">{links.map(([to,l])=><NavLink className={({isActive})=>`mb-2 block rounded-2xl px-4 py-3 font-semibold ${isActive?'bg-blue-600 text-white':'text-slate-600 hover:bg-white'}`} to={to} key={to}>{l}</NavLink>)}</aside><main className="safe-bottom w-full p-4 md:p-6"><Outlet/></main></div><MobileBottomNav/></div>}
