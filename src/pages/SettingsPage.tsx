@@ -1,0 +1,2 @@
+import { authService } from '../services/authService';import { dataMode } from '../lib/supabaseClient';
+export function SettingsPage(){const user=authService.current()!;return <div className="space-y-4"><h2 className="text-2xl font-extrabold">Configuración</h2><div className="rounded-3xl bg-white p-5 shadow-sm"><p><b>Usuario:</b> {user.name}</p><p><b>Rol:</b> {user.role}</p><p><b>Modo de datos:</b> {dataMode}</p><p className="mt-2 text-sm text-slate-500">Supabase está preparado para una integración futura y la app funciona hoy con localStorage.</p></div></div>}

@@ -1,0 +1,1 @@
+export const todayISO=()=>new Date().toISOString().slice(0,10);export const prettyDate=(d:string|Date)=>new Intl.DateTimeFormat('es-PY',{weekday:'short',day:'numeric',month:'short'}).format(typeof d==='string'?new Date(`${d}T00:00:00`):d);export const isPast=(d:string)=>d<todayISO();export const isToday=(d:string)=>d===todayISO();

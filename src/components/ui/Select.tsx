@@ -1,0 +1,1 @@
+import { SelectHTMLAttributes } from 'react';export function Select({className='',children,...p}:SelectHTMLAttributes<HTMLSelectElement>){return <select className={`w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-blue-600 ${className}`} {...p}>{children}</select>}
