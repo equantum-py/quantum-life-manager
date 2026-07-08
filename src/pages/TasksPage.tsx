@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { Task } from '../types';
 import { TaskCard } from '../components/cards/TaskCard';
 import { Button } from '../components/ui/Button';
@@ -7,10 +7,9 @@ import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState } from '../components/ui/EmptyState';
-import { mockTasks } from '../data/mockTasks';
 import { mockSections } from '../data/mockSections';
 import { authService } from '../services/authService';
-import { useLocalCollection } from '../hooks/useLocalCollection';
+import { taskRepository } from '../services/repositories';
 import { todayISO, isPast } from '../utils/dates';
 
 const statuses = [
@@ -27,16 +26,32 @@ const priorities = ['Baja', 'Media', 'Alta', 'Urgente'] as const;
 export function TasksPage() {
   const user = authService.current()!;
 
-  const { items, add, update, remove } = useLocalCollection<Task>(
-    'qlm_tasks',
-    mockTasks
-  );
+  const [items, setItems] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [section, setSection] = useState('all');
   const [status, setStatus] = useState('all');
   const [priority, setPriority] = useState('all');
+
+  const loadTasks = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await taskRepository.listTasks();
+      setItems(data);
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar tareas');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTasks();
+  }, [loadTasks]);
 
   const allowed = mockSections.filter((item) =>
     user.sections.includes(item.id)
@@ -62,9 +77,8 @@ export function TasksPage() {
       task.status !== 'Terminada'
   ).length;
 
-  function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     const form = new FormData(event.currentTarget);
 
     const payload = {
@@ -75,22 +89,42 @@ export function TasksPage() {
       status: form.get('status') as Task['status'],
       dueDate: form.get('dueDate') as string,
       assignee: form.get('assignee') as string,
-      updatedAt: new Date().toISOString(),
     };
 
-    if (editing) {
-      update(editing.id, payload);
-    } else {
-      add({
-        id: crypto.randomUUID(),
-        client: '',
-        createdAt: new Date().toISOString(),
-        ...payload,
-      });
+    try {
+      if (editing) {
+        await taskRepository.updateTask(editing.id, payload);
+      } else {
+        await taskRepository.createTask({
+          ...payload,
+          client: '', // placeholder for now or add to form
+        });
+      }
+      await loadTasks();
+      setOpen(false);
+      setEditing(null);
+    } catch (err: any) {
+      alert(`Error al guardar: ${err.message}`);
     }
+  }
 
-    setOpen(false);
-    setEditing(null);
+  async function handleDelete(id: string) {
+    if (!confirm('¿Eliminar esta tarea?')) return;
+    try {
+      await taskRepository.deleteTask(id);
+      await loadTasks();
+    } catch (err: any) {
+      alert(`Error al eliminar: ${err.message}`);
+    }
+  }
+
+  async function handleMarkDone(id: string) {
+    try {
+      await taskRepository.markTaskDone(id);
+      await loadTasks();
+    } catch (err: any) {
+      alert(`Error al completar: ${err.message}`);
+    }
   }
 
   return (
@@ -154,32 +188,39 @@ export function TasksPage() {
         ]}
       />
 
-      <div className="space-y-3">
-        {visible.length ? (
-          visible.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onDone={() =>
-                update(task.id, {
-                  status: 'Terminada',
-                  updatedAt: new Date().toISOString(),
-                })
-              }
-              onEdit={() => {
-                setEditing(task);
-                setOpen(true);
-              }}
-              onDelete={() => remove(task.id)}
+      {error && (
+        <div className="rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-600">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="py-12 text-center text-sm font-semibold text-slate-400">
+          Cargando tareas...
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {visible.length ? (
+            visible.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onDone={() => handleMarkDone(task.id)}
+                onEdit={() => {
+                  setEditing(task);
+                  setOpen(true);
+                }}
+                onDelete={() => handleDelete(task.id)}
+              />
+            ))
+          ) : (
+            <EmptyState
+              title="Sin tareas"
+              description="Crea una tarea o cambia los filtros."
             />
-          ))
-        ) : (
-          <EmptyState
-            title="Sin tareas"
-            description="Crea una tarea o cambia los filtros."
-          />
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <Modal
         open={open}

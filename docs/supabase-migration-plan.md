@@ -74,7 +74,11 @@ Si `VITE_DATA_MODE=supabase` está activo pero la aplicación detecta que faltan
 - **Fase 2.3**: Repository Layer Mock/Supabase (`src/services/repositories/`).
   - **Capa Abstracción**: Se crea un patrón Factory (Repositorios) que divide responsabilidades. Las pantallas no saben de dónde vienen los datos. El factory intercepta la petición y si el `VITE_DATA_MODE` es mock, va al LocalStorage. Si es supabase, va a la nube de Supabase.
   - **Transición Gradual**: Esto permite migrar pantalla por pantalla y probar Supabase en un módulo a la vez sin romper la estructura principal basada en mock. Esta capa es la base para la Fase 2.4.
-- **Fase 2.4**: Migrar Tareas y Auth (reemplazar login local por Supabase Auth).
+- **Fase 2.4**: Migración inicial de TasksPage al Repository Layer.
+  - **Prueba de Fuego (Tareas)**: Se refactorizó `TasksPage.tsx` para dejar de usar el viejo hook `useLocalCollection` y en su lugar conectarse al `taskRepository`. Tareas se migró primero por ser el módulo principal y más usado, actuando como piloto perfecto.
+  - **Validación Mock**: El objetivo primario es que la pantalla no cambie de apariencia y que todas las acciones asíncronas (crear, editar, borrar, completar) sigan reaccionando con la inmediatez de siempre usando `localStorage`.
+  - **Validación Futura (Supabase)**: En el futuro, cambiar `VITE_DATA_MODE=supabase` debería hidratar la UI con datos vivos de PostgreSQL. La UI (TasksPage) ya incluye manejo de `loading` y `error`, por lo que está lista para enfrentar la latencia de la red.
+  - **Pendientes de migración**: Faltan por migrar la Agenda, las Notas, los Proyectos y refactorizar el Auth local al Supabase Auth.
 - **Fase 2.5**: Migrar Agenda y Reuniones.
 - **Fase 2.6**: Migrar Notas.
 - **Fase 2.7**: Migrar Proyectos.
