@@ -7,3 +7,5 @@ export type MeetingType='Reunión'|'Entrega'|'Evento'|'Recordatorio'|'Actividad'
 export interface Note{id:string;title:string;content:string;sectionId:SectionId;category:string;links?:string[];createdAt:string;updatedAt:string}
 export type ProjectStatus='Nuevo'|'En análisis'|'En diseño'|'En desarrollo'|'En revisión'|'Esperando cliente'|'Pausado'|'Terminado'|'Cobrado'|'Cancelado';export interface Project{id:string;name:string;client:string;status:ProjectStatus;priority:Priority;startDate:string;dueDate:string;pendingTasks:number;notes:string;links:{label:string;url:string}[];paymentStatus:string;sectionId:'equantum'}
 export type AlertLevel='red'|'yellow'|'blue'|'green';export interface AppAlert{id:string;title:string;description:string;sectionId:SectionId;level:AlertLevel;date:string;action:string}
+
+export * from './whatsapp';
