@@ -26,18 +26,18 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center bg-[#F8FAFC] p-5">
+    <main className="flex min-h-screen items-center bg-[#F8FAFC] p-4 md:p-6">
       <section className="mx-auto w-full max-w-md">
-        <div className="mb-6 rounded-[2.5rem] bg-slate-950 p-6 text-white shadow-soft">
-          <div className="grid h-14 w-14 place-items-center rounded-3xl bg-blue-600">
-            <Sparkles size={27} />
+        <div className="mb-6 rounded-[2rem] bg-slate-950 p-6 text-white shadow-soft md:rounded-[2.5rem]">
+          <div className="grid h-16 w-16 place-items-center rounded-3xl bg-blue-600">
+            <Sparkles size={32} />
           </div>
 
-          <p className="mt-7 text-sm font-black uppercase tracking-wide text-blue-200">
+          <p className="mt-8 text-sm font-black uppercase tracking-wide text-blue-200">
             App privada
           </p>
 
-          <h1 className="mt-2 text-4xl font-black leading-none tracking-[-0.05em]">
+          <h1 className="mt-2 text-[32px] font-black leading-none tracking-[-0.05em] md:text-4xl">
             Quantum Life Manager
           </h1>
 
@@ -49,29 +49,30 @@ export function LoginPage() {
 
         <form
           onSubmit={submit}
-          className="rounded-[2.25rem] border border-slate-100 bg-white p-5 shadow-sm"
+          className="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm md:rounded-[2.25rem] md:p-6"
         >
-          <div className="mb-4 flex items-center gap-3">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-700">
-              <LockKeyhole size={23} />
+          <div className="mb-5 flex items-center gap-4">
+            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-blue-50 text-blue-700">
+              <LockKeyhole size={28} />
             </span>
 
             <div>
-              <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">
+              <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
                 Ingresar
               </h2>
 
-              <p className="text-sm font-semibold text-slate-500">
+              <p className="text-[15px] font-semibold text-slate-500">
                 Modo mock/localStorage
               </p>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Input
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="Email"
+              className="min-h-[56px] text-[16px]"
             />
 
             <Input
@@ -79,15 +80,16 @@ export function LoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Password"
               type="password"
+              className="min-h-[56px] text-[16px]"
             />
 
             {error && (
-              <p className="rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">
+              <p className="rounded-2xl bg-red-50 p-4 text-[15px] font-bold text-red-700">
                 {error}
               </p>
             )}
 
-            <Button className="min-h-14 w-full text-base">Entrar</Button>
+            <Button className="min-h-[56px] w-full text-[18px]">Entrar</Button>
           </div>
 
           <div className="mt-5 rounded-3xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-600">

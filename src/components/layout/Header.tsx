@@ -7,33 +7,33 @@ export function Header() {
   const user = authService.current();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#F8FAFC]/95 px-5 pb-3 pt-4 backdrop-blur md:px-6">
+    <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#F8FAFC]/95 px-4 pb-4 pt-5 backdrop-blur md:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[13px] font-semibold capitalize tracking-tight text-slate-500 md:text-sm">
+          <p className="text-[13px] font-bold capitalize tracking-wide text-slate-500 md:text-sm">
             {prettyDate(new Date())}
           </p>
 
-          <h1 className="truncate text-[22px] font-black leading-tight tracking-[-0.03em] text-slate-950 md:text-2xl">
+          <h1 className="truncate text-2xl font-black leading-tight tracking-[-0.03em] text-slate-950 md:text-3xl">
             Hola, {user?.name.split(' ')[0]}
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Link
             to="/alerts"
             aria-label="Ver alertas"
-            className="grid h-12 w-12 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm md:h-11 md:w-11"
+            className="grid h-12 w-12 place-items-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm md:h-11 md:w-11 md:rounded-2xl"
           >
-            <Bell size={22} />
+            <Bell size={24} />
           </Link>
 
           <Link
             to="/tasks"
             aria-label="Crear rápido"
-            className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-600 text-white shadow-soft md:h-11 md:w-11"
+            className="grid h-12 w-12 place-items-center rounded-full bg-blue-600 text-white shadow-soft md:h-11 md:w-11 md:rounded-2xl"
           >
-            <Plus size={24} />
+            <Plus size={26} />
           </Link>
 
           <button

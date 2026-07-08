@@ -38,10 +38,10 @@ export function AlertCard({ alert }: { alert: AppAlert }) {
   const Icon = style.Icon;
 
   return (
-    <article className={`rounded-[1.75rem] border p-5 ${style.wrap}`}>
+    <article className={`rounded-[2rem] border p-6 ${style.wrap}`}>
       <div className="flex gap-4">
-        <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${style.icon}`}>
-          <Icon size={24} />
+        <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-3xl ${style.icon}`}>
+          <Icon size={28} />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -55,11 +55,11 @@ export function AlertCard({ alert }: { alert: AppAlert }) {
             </span>
           </div>
 
-          <h3 className="mt-1 text-[18px] font-black tracking-[-0.02em] text-slate-950">
+          <h3 className="mt-1 text-[20px] font-black tracking-[-0.02em] text-slate-950">
             {alert.title}
           </h3>
 
-          <p className="mt-1 text-[15px] leading-relaxed text-slate-600">
+          <p className="mt-1 text-[16px] leading-relaxed text-slate-600">
             {alert.description}
           </p>
 

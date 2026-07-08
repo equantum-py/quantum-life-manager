@@ -124,9 +124,9 @@ function MobileDashboard({
   stats: { label: string; value: number | string; tone: string }[];
 }) {
   return (
-    <div className="space-y-6 md:hidden">
-      <section className="rounded-[2.25rem] bg-gradient-to-br from-blue-600 via-blue-600 to-blue-800 p-6 text-white shadow-soft">
-        <p className="text-sm font-bold text-blue-100">Tu día de hoy</p>
+    <div className="space-y-8 md:hidden">
+      <section className="rounded-[2.5rem] bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 p-7 text-white shadow-soft">
+        <p className="text-[15px] font-bold tracking-wide text-blue-200">Tu día de hoy</p>
 
         <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">
           Hola, {userName}
@@ -141,8 +141,8 @@ function MobileDashboard({
       <PriorityCard task={priorityTask} />
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
             Acciones rápidas
           </h2>
         </div>
@@ -173,9 +173,9 @@ function MobileDashboard({
 
       <MobileStatScroller stats={stats} />
 
-      <section className="space-y-3">
+      <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">
+          <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
             Próximas tareas
           </h2>
 
@@ -189,9 +189,9 @@ function MobileDashboard({
         ))}
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">
+          <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
             Próximas reuniones
           </h2>
 
@@ -206,9 +206,9 @@ function MobileDashboard({
       </section>
 
       {mainAlert && (
-        <section className="space-y-3">
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">
+            <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
               Alerta principal
             </h2>
 
@@ -221,8 +221,8 @@ function MobileDashboard({
         </section>
       )}
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">
+      <section className="space-y-4">
+        <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
           Áreas
         </h2>
 

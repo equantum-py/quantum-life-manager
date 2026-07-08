@@ -21,18 +21,18 @@ export function TaskCard({
   onDelete?: () => void;
 }) {
   return (
-    <article className="rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
+    <article className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <p className="mb-2 text-[13px] font-bold uppercase tracking-wide text-slate-400">
             {task.sectionId}
           </p>
 
-          <h3 className="text-[18px] font-black leading-snug tracking-[-0.02em] text-slate-950">
+          <h3 className="text-[20px] font-black leading-snug tracking-[-0.02em] text-slate-950">
             {task.title}
           </h3>
 
-          <p className="mt-2 text-[15px] leading-relaxed text-slate-500">
+          <p className="mt-2 text-[16px] leading-relaxed text-slate-500">
             {task.description}
           </p>
         </div>
@@ -57,9 +57,9 @@ export function TaskCard({
             <button
               type="button"
               onClick={onDone}
-              className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-green-600 px-4 py-2.5 text-sm font-black text-white shadow-sm"
+              className="inline-flex min-h-[48px] items-center gap-2 rounded-2xl bg-green-600 px-5 text-[15px] font-black text-white shadow-sm transition-transform active:scale-95"
             >
-              <CheckCircle2 size={18} />
+              <CheckCircle2 size={20} />
               Terminar
             </button>
           )}
@@ -68,10 +68,10 @@ export function TaskCard({
             <button
               type="button"
               onClick={onEdit}
-              className="grid min-h-11 min-w-11 place-items-center rounded-2xl bg-slate-100 text-slate-600"
+              className="grid min-h-[48px] min-w-[48px] place-items-center rounded-2xl bg-slate-100 text-slate-600 transition-colors active:bg-slate-200"
               aria-label="Editar tarea"
             >
-              <MoreHorizontal size={21} />
+              <MoreHorizontal size={24} />
             </button>
           )}
 

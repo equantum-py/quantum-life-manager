@@ -30,16 +30,16 @@ export function SectionCard({
   return (
     <Link
       to={`/sections/${section.id}`}
-      className="block rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm transition active:scale-[0.99]"
+      className="block rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
     >
       <div className="flex items-center gap-4">
-        <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-3xl ring-1 ${color}`}>
-          <Icon size={28} />
+        <span className={`grid h-16 w-16 shrink-0 place-items-center rounded-3xl ring-1 ${color}`}>
+          <Icon size={30} />
         </span>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-[18px] font-black tracking-[-0.02em] text-slate-950">
+            <h3 className="truncate text-[20px] font-black tracking-[-0.02em] text-slate-950">
               {section.name}
             </h3>
 
@@ -48,14 +48,14 @@ export function SectionCard({
             )}
           </div>
 
-          <p className="mt-1 line-clamp-2 text-[14px] leading-relaxed text-slate-500">
+          <p className="mt-1 line-clamp-2 text-[15px] leading-relaxed text-slate-500">
             {section.description}
           </p>
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="text-2xl font-black text-slate-950">{pending}</p>
-          <p className="text-xs font-bold text-slate-400">pend.</p>
+          <p className="text-[28px] font-black text-slate-950">{pending}</p>
+          <p className="text-[13px] font-bold text-slate-400">pend.</p>
         </div>
       </div>
     </Link>
