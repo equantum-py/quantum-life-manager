@@ -1,0 +1,2 @@
+import { User } from '../types';
+export const mockUsers:User[]=[{id:'u1',name:'Derlis Aguilera',email:'derlis@quantum.local',password:'123456',role:'admin',sections:['familia','iglesia','inverfin','equantum','idear']},{id:'u2',name:'Daniel Sosa',email:'daniel@quantum.local',password:'123456',role:'collaborator',sections:['equantum']},{id:'u3',name:'Gabriela',email:'gabriela@quantum.local',password:'123456',role:'family',sections:['familia']}];
