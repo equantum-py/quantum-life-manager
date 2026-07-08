@@ -1,2 +1,288 @@
-import { useState } from 'react';import { Task } from '../types';import { TaskCard } from '../components/cards/TaskCard';import { Button } from '../components/ui/Button';import { Input } from '../components/ui/Input';import { Select } from '../components/ui/Select';import { Textarea } from '../components/ui/Textarea';import { Modal } from '../components/ui/Modal';import { EmptyState } from '../components/ui/EmptyState';import { mockTasks } from '../data/mockTasks';import { mockSections } from '../data/mockSections';import { authService } from '../services/authService';import { useLocalCollection } from '../hooks/useLocalCollection';import { todayISO, isPast } from '../utils/dates';
-export function TasksPage(){const user=authService.current()!;const {items,add,update,remove}=useLocalCollection<Task>('qlm_tasks',mockTasks);const [open,setOpen]=useState(false),[editing,setEditing]=useState<Task|null>(null),[section,setSection]=useState('all'),[status,setStatus]=useState('all'),[priority,setPriority]=useState('all');const allowed=mockSections.filter(s=>user.sections.includes(s.id));const visible=items.filter(t=>user.sections.includes(t.sectionId)&& (section==='all'||t.sectionId===section)&& (status==='all'||t.status===status)&& (priority==='all'||t.priority===priority));function save(e:any){e.preventDefault();const f=new FormData(e.currentTarget);const payload={title:f.get('title') as string,description:f.get('description') as string,sectionId:f.get('sectionId') as any,priority:f.get('priority') as any,status:f.get('status') as any,dueDate:f.get('dueDate') as string,assignee:f.get('assignee') as string,updatedAt:new Date().toISOString()};if(editing)update(editing.id,payload);else add({id:crypto.randomUUID(),client:'',createdAt:new Date().toISOString(),...payload});setOpen(false);setEditing(null)}return <div className="space-y-4"><div className="flex items-center justify-between"><h2 className="text-2xl font-extrabold">Tareas</h2><Button onClick={()=>setOpen(true)}>Nueva</Button></div><div className="grid grid-cols-3 gap-2"><Select value={section} onChange={e=>setSection(e.target.value)}><option value="all">Sección</option>{allowed.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</Select><Select value={status} onChange={e=>setStatus(e.target.value)}><option value="all">Estado</option>{['Pendiente','En progreso','En revisión','Bloqueada','Terminada','Vencida'].map(x=><option key={x}>{x}</option>)}</Select><Select value={priority} onChange={e=>setPriority(e.target.value)}><option value="all">Prioridad</option>{['Baja','Media','Alta','Urgente'].map(x=><option key={x}>{x}</option>)}</Select></div><div className="rounded-3xl bg-white p-4 text-sm text-slate-600 shadow-sm">Hoy: {items.filter(t=>user.sections.includes(t.sectionId)&&t.dueDate===todayISO()).length} · Vencidas: {items.filter(t=>user.sections.includes(t.sectionId)&&isPast(t.dueDate)&&t.status!=='Terminada').length}</div><div className="space-y-3">{visible.length?visible.map(t=><TaskCard key={t.id} task={t} onDone={()=>update(t.id,{status:'Terminada',updatedAt:new Date().toISOString()})} onEdit={()=>{setEditing(t);setOpen(true)}} onDelete={()=>remove(t.id)}/>):<EmptyState title="Sin tareas" description="Crea una tarea o cambia los filtros."/>}</div><Modal open={open} title={editing?'Editar tarea':'Nueva tarea'} onClose={()=>{setOpen(false);setEditing(null)}}><form onSubmit={save} className="space-y-3"><Input name="title" defaultValue={editing?.title} placeholder="Título" required/><Textarea name="description" defaultValue={editing?.description} placeholder="Descripción"/><Select name="sectionId" defaultValue={editing?.sectionId||allowed[0]?.id}>{allowed.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</Select><div className="grid grid-cols-2 gap-2"><Select name="priority" defaultValue={editing?.priority||'Media'}>{['Baja','Media','Alta','Urgente'].map(x=><option key={x}>{x}</option>)}</Select><Select name="status" defaultValue={editing?.status||'Pendiente'}>{['Pendiente','En progreso','En revisión','Bloqueada','Terminada','Vencida'].map(x=><option key={x}>{x}</option>)}</Select></div><Input name="dueDate" type="date" defaultValue={editing?.dueDate||todayISO()}/><Input name="assignee" defaultValue={editing?.assignee||user.name.split(' ')[0]} placeholder="Responsable"/><Button className="w-full">Guardar</Button></form></Modal></div>}
+import { useState, type FormEvent } from 'react';
+import { Task } from '../types';
+import { TaskCard } from '../components/cards/TaskCard';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Select } from '../components/ui/Select';
+import { Textarea } from '../components/ui/Textarea';
+import { Modal } from '../components/ui/Modal';
+import { EmptyState } from '../components/ui/EmptyState';
+import { mockTasks } from '../data/mockTasks';
+import { mockSections } from '../data/mockSections';
+import { authService } from '../services/authService';
+import { useLocalCollection } from '../hooks/useLocalCollection';
+import { todayISO, isPast } from '../utils/dates';
+
+const statuses = [
+  'Pendiente',
+  'En progreso',
+  'En revisión',
+  'Bloqueada',
+  'Terminada',
+  'Vencida',
+] as const;
+
+const priorities = ['Baja', 'Media', 'Alta', 'Urgente'] as const;
+
+export function TasksPage() {
+  const user = authService.current()!;
+
+  const { items, add, update, remove } = useLocalCollection<Task>(
+    'qlm_tasks',
+    mockTasks
+  );
+
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Task | null>(null);
+  const [section, setSection] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [priority, setPriority] = useState('all');
+
+  const allowed = mockSections.filter((item) =>
+    user.sections.includes(item.id)
+  );
+
+  const visible = items.filter(
+    (task) =>
+      user.sections.includes(task.sectionId) &&
+      (section === 'all' || task.sectionId === section) &&
+      (status === 'all' || task.status === status) &&
+      (priority === 'all' || task.priority === priority)
+  );
+
+  const todayCount = items.filter(
+    (task) =>
+      user.sections.includes(task.sectionId) && task.dueDate === todayISO()
+  ).length;
+
+  const overdueCount = items.filter(
+    (task) =>
+      user.sections.includes(task.sectionId) &&
+      isPast(task.dueDate) &&
+      task.status !== 'Terminada'
+  ).length;
+
+  function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const form = new FormData(event.currentTarget);
+
+    const payload = {
+      title: form.get('title') as string,
+      description: form.get('description') as string,
+      sectionId: form.get('sectionId') as Task['sectionId'],
+      priority: form.get('priority') as Task['priority'],
+      status: form.get('status') as Task['status'],
+      dueDate: form.get('dueDate') as string,
+      assignee: form.get('assignee') as string,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (editing) {
+      update(editing.id, payload);
+    } else {
+      add({
+        id: crypto.randomUUID(),
+        client: '',
+        createdAt: new Date().toISOString(),
+        ...payload,
+      });
+    }
+
+    setOpen(false);
+    setEditing(null);
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-black tracking-[-0.04em] text-slate-950">
+            Tareas
+          </h2>
+
+          <p className="mt-1 text-[15px] font-semibold text-slate-500">
+            Hoy: {todayCount} · Vencidas: {overdueCount}
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="min-h-12 rounded-2xl px-5"
+        >
+          Nueva
+        </Button>
+      </div>
+
+      <ChipScroller
+        label="Secciones"
+        value={section}
+        onChange={setSection}
+        options={[
+          { value: 'all', label: 'Todas' },
+          ...allowed.map((item) => ({
+            value: item.id,
+            label: item.name.split(' ')[0],
+          })),
+        ]}
+      />
+
+      <ChipScroller
+        label="Estado"
+        value={status}
+        onChange={setStatus}
+        options={[
+          { value: 'all', label: 'Todos' },
+          ...statuses.map((item) => ({
+            value: item,
+            label: item,
+          })),
+        ]}
+      />
+
+      <ChipScroller
+        label="Prioridad"
+        value={priority}
+        onChange={setPriority}
+        options={[
+          { value: 'all', label: 'Todas' },
+          ...priorities.map((item) => ({
+            value: item,
+            label: item,
+          })),
+        ]}
+      />
+
+      <div className="space-y-3">
+        {visible.length ? (
+          visible.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onDone={() =>
+                update(task.id, {
+                  status: 'Terminada',
+                  updatedAt: new Date().toISOString(),
+                })
+              }
+              onEdit={() => {
+                setEditing(task);
+                setOpen(true);
+              }}
+              onDelete={() => remove(task.id)}
+            />
+          ))
+        ) : (
+          <EmptyState
+            title="Sin tareas"
+            description="Crea una tarea o cambia los filtros."
+          />
+        )}
+      </div>
+
+      <Modal
+        open={open}
+        title={editing ? 'Editar tarea' : 'Nueva tarea'}
+        onClose={() => {
+          setOpen(false);
+          setEditing(null);
+        }}
+      >
+        <form onSubmit={save} className="space-y-3">
+          <Input
+            name="title"
+            defaultValue={editing?.title}
+            placeholder="Título"
+            required
+          />
+
+          <Textarea
+            name="description"
+            defaultValue={editing?.description}
+            placeholder="Descripción"
+          />
+
+          <Select
+            name="sectionId"
+            defaultValue={editing?.sectionId || allowed[0]?.id}
+          >
+            {allowed.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </Select>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Select
+              name="priority"
+              defaultValue={editing?.priority || 'Media'}
+            >
+              {priorities.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </Select>
+
+            <Select name="status" defaultValue={editing?.status || 'Pendiente'}>
+              {statuses.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </Select>
+          </div>
+
+          <Input
+            name="dueDate"
+            type="date"
+            defaultValue={editing?.dueDate || todayISO()}
+          />
+
+          <Input
+            name="assignee"
+            defaultValue={editing?.assignee || user.name.split(' ')[0]}
+            placeholder="Responsable"
+          />
+
+          <Button className="min-h-14 w-full">Guardar</Button>
+        </form>
+      </Modal>
+    </div>
+  );
+}
+
+function ChipScroller({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <section>
+      <p className="mb-2 text-sm font-black text-slate-500">{label}</p>
+
+      <div className="-mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2 pb-1">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-black ${
+                value === option.value
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white text-slate-600 ring-1 ring-slate-200'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
