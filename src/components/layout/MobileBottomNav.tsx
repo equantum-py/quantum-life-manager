@@ -19,7 +19,9 @@ export function MobileBottomNav() {
             to={to}
             className={({ isActive }) =>
               `tap flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-3xl text-[12px] font-bold transition ${
-                isActive ? 'bg-blue-50 text-blue-700' : 'text-slate-500 active:bg-slate-50'
+                isActive
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-slate-500 active:bg-slate-50'
               }`
             }
           >
