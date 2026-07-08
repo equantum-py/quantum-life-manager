@@ -71,7 +71,9 @@ Si `VITE_DATA_MODE=supabase` está activo pero la aplicación detecta que faltan
   - Documentación (`README.md`).
 - **Fase 2.2**: Inicialización del cliente de Supabase (`src/lib/supabaseClient.ts`) e integración de variables de entorno.
   - **Cliente y feature flag**: En esta fase sólo se prepara la conexión base, inyectando `appConfig.ts` y `dataModeService.ts` para establecer las banderas (`mock` vs `supabase`). Todavía no se migran datos reales a Supabase ni se alteran las interfaces visuales; simplemente se deja el cliente de @supabase/supabase-js expuesto de manera segura para ser utilizado progresivamente por los repositorios.
-- **Fase 2.3**: Refactorización de *Services* e inyección de la lógica del `data mode`.
+- **Fase 2.3**: Repository Layer Mock/Supabase (`src/services/repositories/`).
+  - **Capa Abstracción**: Se crea un patrón Factory (Repositorios) que divide responsabilidades. Las pantallas no saben de dónde vienen los datos. El factory intercepta la petición y si el `VITE_DATA_MODE` es mock, va al LocalStorage. Si es supabase, va a la nube de Supabase.
+  - **Transición Gradual**: Esto permite migrar pantalla por pantalla y probar Supabase en un módulo a la vez sin romper la estructura principal basada en mock. Esta capa es la base para la Fase 2.4.
 - **Fase 2.4**: Migrar Tareas y Auth (reemplazar login local por Supabase Auth).
 - **Fase 2.5**: Migrar Agenda y Reuniones.
 - **Fase 2.6**: Migrar Notas.
