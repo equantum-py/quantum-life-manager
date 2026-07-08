@@ -69,7 +69,8 @@ Si `VITE_DATA_MODE=supabase` está activo pero la aplicación detecta que faltan
   - Seguridad (`migrations/0002_rls_policies.sql`).
   - Semillas y datos estáticos (`seed.sql`).
   - Documentación (`README.md`).
-- **Fase 2.2**: Inicialización del cliente de Supabase (`src/lib/supabase.ts`) e integración de variables de entorno.
+- **Fase 2.2**: Inicialización del cliente de Supabase (`src/lib/supabaseClient.ts`) e integración de variables de entorno.
+  - **Cliente y feature flag**: En esta fase sólo se prepara la conexión base, inyectando `appConfig.ts` y `dataModeService.ts` para establecer las banderas (`mock` vs `supabase`). Todavía no se migran datos reales a Supabase ni se alteran las interfaces visuales; simplemente se deja el cliente de @supabase/supabase-js expuesto de manera segura para ser utilizado progresivamente por los repositorios.
 - **Fase 2.3**: Refactorización de *Services* e inyección de la lógica del `data mode`.
 - **Fase 2.4**: Migrar Tareas y Auth (reemplazar login local por Supabase Auth).
 - **Fase 2.5**: Migrar Agenda y Reuniones.
