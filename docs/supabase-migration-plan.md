@@ -64,7 +64,11 @@ Los archivos actuales como `src/data/mockTasks.ts` se convertirán en scripts `s
 Si `VITE_DATA_MODE=supabase` está activo pero la aplicación detecta que faltan las credenciales (`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`) en el archivo `.env`, se mostrará una alerta en la consola y la app caerá de forma elegante a `VITE_DATA_MODE=mock`, para que el desarrollador nunca experimente una pantalla blanca.
 
 ## 10. Fases de Implementación
-- **Fase 2.1**: Creación de esquema relacional SQL (`schema.sql` y `RLS.sql`).
+- **Fase 2.1**: Estructura Local SQL.
+  - Esquema base (`migrations/0001_initial_schema.sql`).
+  - Seguridad (`migrations/0002_rls_policies.sql`).
+  - Semillas y datos estáticos (`seed.sql`).
+  - Documentación (`README.md`).
 - **Fase 2.2**: Inicialización del cliente de Supabase (`src/lib/supabase.ts`) e integración de variables de entorno.
 - **Fase 2.3**: Refactorización de *Services* e inyección de la lógica del `data mode`.
 - **Fase 2.4**: Migrar Tareas y Auth (reemplazar login local por Supabase Auth).
