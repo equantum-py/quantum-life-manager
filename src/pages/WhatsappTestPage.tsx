@@ -8,11 +8,16 @@ export function WhatsappTestPage() {
   const [inputMessage, setInputMessage] = useState('');
   const [result, setResult] = useState<ProcessedMessageResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleClassify = async (text: string) => {
     if (!text.trim()) return;
     setIsProcessing(true);
     setResult(null);
+    setSaveMessage(null);
+    setSaveError(null);
+    
     try {
       const simulatedIncoming = {
         id: `msg_${Date.now()}`,
@@ -21,10 +26,13 @@ export function WhatsappTestPage() {
         type: 'text' as const,
         text: { body: text },
       };
+      
       const res = await whatsappIngestionService.processMessage(simulatedIncoming);
       setResult(res);
-    } catch (e) {
+      setSaveMessage('Clasificación guardada exitosamente en la base de datos.');
+    } catch (e: any) {
       console.error(e);
+      setSaveError(e.message || 'Error al procesar/guardar la clasificación.');
     } finally {
       setIsProcessing(false);
     }
@@ -76,6 +84,18 @@ export function WhatsappTestPage() {
           {isProcessing ? 'Clasificando...' : 'Clasificar Mensaje'}
         </Button>
       </div>
+
+      {saveError && (
+        <div className="rounded-2xl bg-red-50 p-4 font-semibold text-red-600 shadow-sm">
+          {saveError}
+        </div>
+      )}
+
+      {saveMessage && !saveError && (
+        <div className="rounded-2xl bg-green-50 p-4 font-semibold text-green-700 shadow-sm">
+          {saveMessage}
+        </div>
+      )}
 
       {result && (
         <div className="space-y-4 rounded-[28px] border border-blue-200/50 bg-blue-50/70 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-xl">
