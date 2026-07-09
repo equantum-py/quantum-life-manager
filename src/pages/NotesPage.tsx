@@ -83,62 +83,77 @@ export function NotesPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-[32px] font-black tracking-[-0.04em] text-slate-950">
+        <h2 className="app-mobile-title">
           Notas
         </h2>
         <Button
           onClick={() => setOpen(true)}
-          className="min-h-[48px] rounded-2xl px-5"
+          className="min-h-12 rounded-[var(--qlm-radius-md)] px-5"
         >
           Nueva
         </Button>
       </div>
 
-      <Input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Buscar notas..."
-        className="min-h-[56px] text-[16px]"
-      />
+      <div className="space-y-4">
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Buscar notas..."
+          className="min-h-14 rounded-[var(--qlm-radius-md)] text-[16px] shadow-sm border-white/60"
+        />
 
-      <Select
-        value={section}
-        onChange={(e) => setSection(e.target.value)}
-        className="min-h-[56px] text-[16px]"
-      >
-        <option value="all">Todas las áreas</option>
-        {allowed.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </Select>
+        <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8">
+          <div className="flex gap-2 pb-2">
+            <button
+              onClick={() => setSection('all')}
+              className={`app-pill shrink-0 ${section === 'all' ? '!bg-[var(--qlm-primary)] !text-white !border-none' : ''}`}
+            >
+              Todas las áreas
+            </button>
+            {allowed.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setSection(s.id)}
+                className={`app-pill shrink-0 ${section === s.id ? '!bg-[var(--qlm-primary)] !text-white !border-none' : ''}`}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {error && (
-        <div className="rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-600">
+        <div className="rounded-[var(--qlm-radius-md)] bg-red-50 p-4 text-[14px] font-bold text-red-600">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="py-12 text-center text-sm font-semibold text-slate-400">
+        <div className="py-12 text-center text-[15px] font-semibold text-slate-400">
           Cargando notas...
         </div>
       ) : (
         <div className="space-y-4">
-          {visible.map((n) => (
-            <NoteCard
-              key={n.id}
-              note={n}
-              onEdit={() => {
-                setEditing(n);
-                setOpen(true);
-              }}
-              onDelete={() => handleDelete(n.id)}
-            />
-          ))}
+          {visible.length > 0 ? (
+            visible.map((n) => (
+              <NoteCard
+                key={n.id}
+                note={n}
+                onEdit={() => {
+                  setEditing(n);
+                  setOpen(true);
+                }}
+                onDelete={() => handleDelete(n.id)}
+              />
+            ))
+          ) : (
+            <div className="app-card-soft p-8 text-center text-slate-500 font-medium">
+              Todavía no hay notas guardadas.
+            </div>
+          )}
         </div>
       )}
 

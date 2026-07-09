@@ -86,23 +86,23 @@ export function AgendaPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-[32px] font-black tracking-[-0.04em] text-slate-950">
+        <h2 className="app-mobile-title">
           Agenda
         </h2>
         <Button
           onClick={() => setOpen(true)}
-          className="min-h-[48px] rounded-2xl px-5"
+          className="min-h-12 rounded-[var(--qlm-radius-md)] px-5"
         >
           Nuevo
         </Button>
       </div>
 
-      <div className="rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-slate-100">
-        <p className="text-[15px] font-semibold text-slate-500">
-          <b>Hoy:</b> {visible.filter((m) => m.date === todayISO()).length}{' '}
-          eventos · <b>Próximos:</b>{' '}
+      <div className="app-card-soft p-5">
+        <p className="text-[15px] font-medium text-slate-600">
+          <strong className="text-slate-900 font-bold">Hoy:</strong> {visible.filter((m) => m.date === todayISO()).length}{' '}
+          eventos · <strong className="text-slate-900 font-bold">Próximos:</strong>{' '}
           {visible.filter((m) => m.date >= todayISO()).length}
         </p>
       </div>

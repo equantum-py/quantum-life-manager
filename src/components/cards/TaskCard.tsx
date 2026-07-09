@@ -21,7 +21,7 @@ export function TaskCard({
   onDelete?: () => void;
 }) {
   return (
-    <article className="rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-all hover:bg-white/80">
+    <article className="app-card transition-all hover:bg-white/80 active:scale-[0.99]">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <p className="mb-2 text-[13px] font-bold uppercase tracking-wide text-slate-400">

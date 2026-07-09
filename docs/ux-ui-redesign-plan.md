@@ -23,7 +23,7 @@ Reestructurar la envoltura de la aplicación para garantizar comportamiento nati
 - **Login Mobile:** Logo centrado arriba, título claro ("Bienvenido a Quantum"), inputs grandes redondeados, botón principal ancho, link secundario simple, mucho aire. Sin sidebar ni dashboard. Diseño pensado para instalar.
 - **Dashboard Mobile:** Título grande arriba ("Hola, Derlis"), subtítulo corto (fecha/resumen del día). Cards grandes tipo módulos (Hoy, Tareas, Agenda, Telegram, Secciones) con accesos rápidos redondeados. Menos tablas, más cards.
 
-### UX-4: Tareas, Agenda y Notas
+### ~~UX-4: Tareas, Agenda y Notas~~ (COMPLETADO)
 Rediseñar las listas para que no sean tablas admin.
 - **Tareas:** Filtros horizontales tipo píldoras. Cards grandes (sección, título, fecha/hora, prioridad, acción principal). Acciones rápidas visibles. Estados claros pero limpios.
 - **Agenda:** Timeline o cards grandes por evento. Fecha/hora visible, título natural, badge pequeño de tipo "Reunión". Border radius amplio y mejor separación entre eventos.

@@ -138,10 +138,10 @@ export function TasksPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black tracking-[-0.04em] text-slate-950">
+          <h2 className="app-mobile-title">
             Tareas
           </h2>
 
@@ -315,19 +315,19 @@ function ChipScroller({
 }) {
   return (
     <section>
-      <p className="mb-2 text-sm font-black text-slate-500">{label}</p>
+      <p className="mb-2 text-[13px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
 
-      <div className="-mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex gap-2 pb-1">
+      <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8">
+        <div className="flex gap-2 pb-2">
           {options.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => onChange(option.value)}
-              className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-black ${
+              className={`app-pill shrink-0 ${
                 value === option.value
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-white text-slate-600 ring-1 ring-slate-200'
+                  ? '!bg-[var(--qlm-primary)] !text-white !border-none'
+                  : ''
               }`}
             >
               {option.label}

@@ -12,7 +12,7 @@ export function MeetingCard({
   onDelete?: () => void;
 }) {
   return (
-    <article className="rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-all hover:bg-white/80">
+    <article className="app-card transition-all hover:bg-white/80 active:scale-[0.99]">
       <div className="flex gap-4">
         <div className="grid h-16 w-16 shrink-0 place-items-center rounded-3xl bg-violet-100/50 text-violet-700 ring-1 ring-violet-200/50">
           <CalendarDays size={30} />
