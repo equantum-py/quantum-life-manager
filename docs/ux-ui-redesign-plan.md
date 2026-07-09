@@ -13,7 +13,7 @@ El objetivo es establecer los cimientos (estilo iOS/PWA) antes de modificar vist
 - **Tipografía y Jerarquía:** Títulos grandes, mucho espacio blanco (aire visual), y jerarquía visual fuerte.
 - **Formas y Componentes:** Bordes muy redondeados (border-radius alto), inputs grandes y cómodos, botones anchos, evitar botones muy chicos. Implementar filtros horizontales tipo píldoras.
 
-### UX-2: Mobile App Layout
+### ~~UX-2: Mobile App Layout~~ (COMPLETADO)
 Reestructurar la envoltura de la aplicación para garantizar comportamiento nativo.
 - **Navegación Inferior (Mobile):** Fija tipo app, iconos grandes, labels cortos, estado activo muy claro, fondo glass/blur suave, safe area bottom.
 - **General Layout:** En desktop puede seguir existiendo el sidebar, pero en móvil debe ocultarse y priorizar el bottom nav.

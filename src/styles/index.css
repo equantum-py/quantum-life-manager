@@ -31,9 +31,13 @@
   box-sizing: border-box;
 }
 
+html, body {
+  overscroll-behavior-y: none;
+}
+
 body {
   margin: 0;
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--qlm-bg);
   background-image: 
     radial-gradient(circle at top right, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
@@ -63,7 +67,7 @@ input, select, textarea, button {
 /* Base Classes for UX-1 */
 .app-shell {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-page {

@@ -7,7 +7,7 @@ export function Header() {
   const user = authService.current();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/60 bg-white/50 px-4 pb-4 pt-5 backdrop-blur-xl md:px-8">
+    <header className="sticky top-0 z-30 app-glass border-none px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[var(--qlm-shadow-soft)] md:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[13px] font-medium capitalize tracking-wide text-slate-500 md:text-sm">
