@@ -3,24 +3,35 @@ import { TaskRepository } from './types';
 import { supabase } from '../../lib/supabaseClient';
 import { dataModeService } from '../dataModeService';
 
+function normalizeTaskFromSupabase(d: any): Task {
+  return {
+    ...d,
+    id: d.id || '',
+    title: d.title || 'Sin título',
+    description: d.description || '',
+    sectionId: d.section_id || 'equantum',
+    projectId: d.project_id || undefined,
+    dueDate: d.due_date || new Date().toISOString(),
+    createdAt: d.created_at || new Date().toISOString(),
+    updatedAt: d.updated_at || d.created_at || new Date().toISOString(),
+    priority: d.priority || 'Media',
+    status: d.status || 'Pendiente',
+    assignee: d.assignee || 'Sin asignar'
+  } as Task;
+}
+
 export const supabaseTaskRepository: TaskRepository = {
   async listTasks(): Promise<Task[]> {
     dataModeService.assertSupabaseReady();
-    const { data, error } = await supabase!.from('tasks').select('*').order('created_at', { ascending: false });
-    if (error) throw error;
-    
-    // Convert snake_case to camelCase for the frontend and ensure non-null critical values
-    return data.map(d => ({
-      ...d,
-      sectionId: d.section_id,
-      projectId: d.project_id,
-      dueDate: d.due_date || new Date().toISOString(),
-      createdAt: d.created_at || new Date().toISOString(),
-      updatedAt: d.updated_at || new Date().toISOString(),
-      priority: d.priority || 'Media',
-      status: d.status || 'Pendiente',
-      assignee: d.assignee || 'Sin asignar'
-    })) as Task[];
+    try {
+      const { data, error } = await supabase!.from('tasks').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      
+      return (data || []).map(normalizeTaskFromSupabase);
+    } catch (e) {
+      console.error('Error in supabaseTaskRepository.listTasks:', e);
+      throw e;
+    }
   },
 
   async createTask(task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
@@ -38,17 +49,15 @@ export const supabaseTaskRepository: TaskRepository = {
       reminder: task.reminder,
     };
 
-    const { data, error } = await supabase!.from('tasks').insert(dbTask).select().single();
-    if (error) throw error;
-    
-    return {
-      ...data,
-      sectionId: data.section_id,
-      projectId: data.project_id,
-      dueDate: data.due_date,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-    } as Task;
+    try {
+      const { data, error } = await supabase!.from('tasks').insert(dbTask).select().single();
+      if (error) throw error;
+      
+      return normalizeTaskFromSupabase(data);
+    } catch (e) {
+      console.error('Error in supabaseTaskRepository.createTask:', e);
+      throw e;
+    }
   },
 
   async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
@@ -65,17 +74,15 @@ export const supabaseTaskRepository: TaskRepository = {
     delete dbUpdates.createdAt;
     delete dbUpdates.updatedAt;
 
-    const { data, error } = await supabase!.from('tasks').update(dbUpdates).eq('id', id).select().single();
-    if (error) throw error;
+    try {
+      const { data, error } = await supabase!.from('tasks').update(dbUpdates).eq('id', id).select().single();
+      if (error) throw error;
 
-    return {
-      ...data,
-      sectionId: data.section_id,
-      projectId: data.project_id,
-      dueDate: data.due_date,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-    } as Task;
+      return normalizeTaskFromSupabase(data);
+    } catch (e) {
+      console.error('Error in supabaseTaskRepository.updateTask:', e);
+      throw e;
+    }
   },
 
   async deleteTask(id: string): Promise<void> {

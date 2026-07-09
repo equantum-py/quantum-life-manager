@@ -61,7 +61,9 @@ export function TasksPage() {
     user.sections.includes(item.id)
   );
 
-  const visible = items.filter(
+  const safeTasks = Array.isArray(items) ? items.filter(Boolean) : [];
+
+  const visible = safeTasks.filter(
     (task) =>
       task &&
       task.sectionId &&
@@ -71,12 +73,12 @@ export function TasksPage() {
       (priority === 'all' || task.priority === priority)
   );
 
-  const todayCount = items.filter(
+  const todayCount = safeTasks.filter(
     (task) =>
       task && task.sectionId && user.sections.includes(task.sectionId) && task.dueDate === todayISO()
   ).length;
 
-  const overdueCount = items.filter(
+  const overdueCount = safeTasks.filter(
     (task) =>
       task &&
       task.sectionId &&
