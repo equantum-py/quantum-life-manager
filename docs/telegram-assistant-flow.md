@@ -17,38 +17,32 @@ El bot evalúa el mensaje entrante y detecta una de las siguientes intenciones (
 - `cancel_pending`: "CANCELAR" descarta la acción previa.
 - `supply_section`: Respuesta a estado `needs_section` para completar un requerimiento faltante.
 
-## Ejemplos Reales de Interacción
+## Ejemplos Reales de Interacción (Modo Natural)
 
-**1. Tareas (Flujo Clásico)**
+**1. Notas (Auto-guardado Directo)**
+> **Usuario:** anota revisar carrito abandonado de GuaraMarket
+> **Bot:** Listo señor, guardé la nota sobre revisar carrito abandonado de Guaramarket en Equantum.
+*(Se crea automáticamente en public.notes y el registro pasa directo a confirmado).*
+
+**2. Reuniones (Auto-guardado Directo)**
+> **Usuario:** mañana tengo una reunión en Inverfin con la gente de Sony agenda para las 10:35
+> **Bot:** Listo señor, agendé la reunión con la gente de Sony para mañana a las 10:35 en Inverfin.
+*(Se crea en public.meetings y pasa directo a confirmado).*
+
+**3. Tareas (Auto-guardado Directo)**
 > **Usuario:** Familia leer la biblia a las 19
-> **Bot:** ✅ Detecté una tarea. Sección: familia, Título: Leer la biblia, Hora: 19:00. Respondé CREAR...
-> **Usuario:** CREAR
-> **Bot:** ✅ Tarea creada correctamente.
+> **Bot:** Listo señor, guardé la tarea "Leer la biblia" para hoy a las 19:00 en Familia.
+*(Se crea en public.tasks).*
 
-**2. Reuniones**
-> **Usuario:** Mañana tengo una reunión en Inverfin con la gente de Sony agenda para las 10:30
-> **Bot:** ✅ Detecté una reunión. Sección: inverfin, Título: Reunión con la gente de Sony, Fecha: mañana, Hora: 10:30. Respondé CREAR...
-> **Usuario:** CREAR
-> **Bot:** ✅ Reunión agendada correctamente.
-
-**3. Notas**
-> **Usuario:** eQuantum idea para GuaraMarket: mejorar carrito abandonado
-> **Bot:** ✅ Detecté una nota para equantum. Título: Idea para GuaraMarket. Respondé CREAR...
-> **Usuario:** CREAR
-> **Bot:** ✅ Nota guardada correctamente.
-
-**4. Consultas**
+**4. Consultas (Flujo Directo)**
 > **Usuario:** Qué tengo para hoy?
-> **Bot:** 📅 Agenda de Hoy. (Muestra reuniones y tareas del día o avisa si está libre).
+> **Bot:** Señor, para hoy tenés... (Lista de tareas y reuniones, sin intentar crear nada).
 
-> **Usuario:** Qué tengo pendiente en eQuantum?
-> **Bot:** 📋 Pendientes en EQUANTUM. (Lista las tareas pendientes).
-
-**5. Datos Faltantes (Multiturno)**
-> **Usuario:** Recordame llamar a mamá mañana
-> **Bot:** ¿En qué sección guardo esto? Respondé con: Familia, eQuantum, Inverfin, Iglesia o IDEAR.
-> **Usuario:** Familia
-> **Bot:** Listo, entendí esto: Sección: familia. Título: Llamar a mamá... Respondé CREAR o CANCELAR.
+**5. Datos Faltantes (Multiturno & Fallback a CREAR)**
+> **Usuario:** Recordame llamar mañana
+> **Bot:** Claro señor. ¿En qué sección lo guardo: Familia, eQuantum, Inverfin, Iglesia o IDEAR?
+> **Usuario:** Inverfin
+> **Bot:** Señor, tengo la acción lista: Título: Llamar mañana... Respondé CREAR para guardar o CANCELAR para descartar.
 
 ## Futuro del Parser
 Actualmente las funciones `classifyMessage`, `detectIntent` y `extractDateTime` utilizan reglas duras y RegEx. En la fase de integración de IA real, toda la función `classifyMessage` será reemplazada por una llamada directa a OpenAI/Gemini que devolverá un JSON estructurado con el `actionType` y los `extractedData`. La arquitectura de estado `pending_action` se mantendrá intacta.

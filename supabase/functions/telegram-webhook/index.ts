@@ -12,20 +12,22 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 // ==========================================
 function isBotGeneratedMessage(text: string): boolean {
   const lowerText = text.toLowerCase();
-  return lowerText.includes("✅ detecté") ||
+  return lowerText.includes("listo señor") ||
+         lowerText.includes("señor, ya existe") ||
+         lowerText.includes("señor, entendí el pedido") ||
+         lowerText.includes("señor, para hoy") ||
+         lowerText.includes("✅ detecté") ||
          lowerText.includes("✅ mensaje clasificado") ||
          lowerText.includes("✅ tarea creada") ||
          lowerText.includes("✅ reunión agendada") ||
          lowerText.includes("✅ nota guardada") ||
          lowerText.includes("respondé crear") ||
          lowerText.includes("respondé cancelar") ||
-         lowerText.includes("¿en qué sección guardo esto?") ||
+         lowerText.includes("¿en qué sección") ||
          lowerText.includes("¿para qué día") ||
          lowerText.includes("¿a qué hora") ||
-         lowerText.includes("guardado en quantum") ||
          lowerText.includes("sección:") ||
-         lowerText.includes("título:") ||
-         lowerText.includes("prioridad:");
+         lowerText.includes("título:");
 }
 
 function sendTelegramMessage(chat_id: string, text: string) {
@@ -38,44 +40,41 @@ function sendTelegramMessage(chat_id: string, text: string) {
   }).catch(err => console.error("Error sending TG msg:", err));
 }
 
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 // ==========================================
 // 2. PARSER & INTENT DETECTION
 // ==========================================
 function detectIntent(text: string) {
   const lowerText = text.toLowerCase();
   
-  // Queries
   if (lowerText.includes("qué tengo para hoy") || lowerText.includes("que tengo para hoy")) return "query_today";
   if (lowerText.includes("qué tengo pendiente") || lowerText.includes("que tengo pendiente")) return "query_section_pending";
   if (lowerText.includes("ayuda") || lowerText.includes("help") || lowerText.includes("comandos")) return "query_help";
   
-  // Confirmation
   const command = lowerText.trim();
   if (command === "crear") return "confirm_pending";
   if (command === "cancelar") return "cancel_pending";
   
-  // Direct Section match for needs_section state
   const validSections = ["familia", "iglesia", "inverfin", "equantum", "idear"];
   if (validSections.includes(command)) return "supply_section";
 
-  // Create
   if (lowerText.includes("reunión") || lowerText.includes("reunion") || lowerText.includes("agendar") || lowerText.includes("encuentro") || lowerText.includes("cita")) return "create_meeting";
   if (lowerText.includes("nota") || lowerText.includes("idea") || lowerText.includes("anotar") || lowerText.includes("apuntar") || lowerText.includes("guardar idea")) return "create_note";
+  if (lowerText.includes("recordar") || lowerText.includes("recordarme")) return "create_reminder";
   
-  // Default to task if actionable verb
-  if (lowerText.includes("recordar") || lowerText.includes("recordarme")) return "create_reminder"; // Treated as task internally
-
-  // Default
   return "create_task";
 }
 
 function detectSection(text: string) {
   const lowerText = text.toLowerCase();
-  if (lowerText.includes("familia") || lowerText.includes("casa") || lowerText.includes("esposa")) return "familia";
-  if (lowerText.includes("iglesia") || lowerText.includes("ministerio")) return "iglesia";
-  if (lowerText.includes("inverfin")) return "inverfin";
-  if (lowerText.includes("equantum") || lowerText.includes("guaramarket") || lowerText.includes("guara market")) return "equantum";
-  if (lowerText.includes("idear") || lowerText.includes("facultad") || lowerText.includes("reseña") || lowerText.includes("estudio")) return "idear";
+  if (lowerText.match(/\b(equantum|guaramarket|guara market|corpicia|marmolería|marmoleria|joyerialis|portal cooperativo)\b/)) return "equantum";
+  if (lowerText.match(/\b(inverfin|sony)\b/)) return "inverfin";
+  if (lowerText.match(/\b(familia|casa|esposa|mamá|biblia familiar|luz)\b/)) return "familia";
+  if (lowerText.match(/\b(idear|facultad|reseña|piper|estudio)\b/)) return "idear";
+  if (lowerText.match(/\b(iglesia|ministerio|culto)\b/)) return "iglesia";
   return null;
 }
 
@@ -90,7 +89,7 @@ function extractDateTime(text: string) {
   let hour = null;
   let minute = null;
   let timeLabel = null;
-  const timeRegex = /a las (\d{1,2})(?::(\d{2}))?|(\d{1,2})(?::(\d{2}))?\s*hs/i;
+  const timeRegex = /a las (\d{1,2})(?::(\d{2}))?|para las (\d{1,2})(?::(\d{2}))?|(\d{1,2})(?::(\d{2}))?\s*hs/i;
   const timeMatch = lowerText.match(timeRegex);
   if (timeMatch) {
     hour = parseInt(timeMatch[1] || timeMatch[3], 10);
@@ -103,7 +102,6 @@ function extractDateTime(text: string) {
     }
   }
 
-  // Calc ISO Date
   const d = new Date();
   if (dateLabel === 'mañana') d.setDate(d.getDate() + 1);
   else if (dateLabel && dateLabel !== 'hoy') {
@@ -113,12 +111,11 @@ function extractDateTime(text: string) {
       const targetDay = dayIdxMap[dateLabel];
       const currentDay = d.getDay();
       let diff = targetDay - currentDay;
-      if (diff <= 0) diff += 7; // Next week's day
+      if (diff <= 0) diff += 7;
       d.setDate(d.getDate() + diff);
     }
   }
 
-  // If no dateLabel is provided, we default to "hoy" visually for tasks, but leave it explicit if needed.
   const explicitDate = dateLabel || 'hoy';
   const isoDateOnly = d.toISOString().split('T')[0];
   d.setHours(hour ?? 0, minute ?? 0, 0, 0);
@@ -127,22 +124,35 @@ function extractDateTime(text: string) {
   return { explicitDate, hour, minute, timeLabel, isoDateOnly, isoDateTime };
 }
 
-function cleanTitle(text: string) {
-  let cleanTitle = text;
-  // 1. Quitar seccion (Familia, eQuantum, etc)
-  cleanTitle = cleanTitle.replace(/^(equantum|eQuantum|familia|iglesia|inverfin|idear)\s+/i, "");
-  // 2. Quitar ruido comun
-  cleanTitle = cleanTitle.replace(/\b(mañana|hoy|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo|recordar|recordarme|el)\b/ig, "");
-  // 3. Quitar verbos y palabras conectores ruidosos
-  cleanTitle = cleanTitle.replace(/\b(tengo|una|agenda|agendar|para las|a las|en)\b/ig, "");
-  // 4. Quitar horas
-  cleanTitle = cleanTitle.replace(/\b\d{1,2}(:\d{2})?\b/ig, "");
-  cleanTitle = cleanTitle.replace(/\b\d{1,2}(:\d{2})?\s*hs\b/ig, "");
-  cleanTitle = cleanTitle.replace(/✅/g, "");
+function cleanTitle(text: string, intent: string) {
+  let t = text;
+  
+  if (intent === 'create_note') {
+    t = t.replace(/^(equantum|eQuantum|familia|iglesia|inverfin|idear)\s+/i, "");
+    t = t.replace(/\b(anota|anotar|nota:|nota|idea|apuntar|guardar idea)\b/ig, "");
+  } else if (intent === 'create_meeting') {
+    t = t.replace(/^(equantum|eQuantum|familia|iglesia|inverfin|idear)\s+/i, "");
+    t = t.replace(/\b(mañana|hoy|tengo|una|reunión|reunion|agenda|agendar|cita|encuentro|en inverfin|inverfin)\b/ig, "");
+    t = t.replace(/\b(para las|a las)\s*\d{1,2}(:\d{2})?\b/ig, "");
+    t = t.replace(/\b\d{1,2}(:\d{2})?\s*hs\b/ig, "");
+  } else {
+    t = t.replace(/^(equantum|eQuantum|familia|iglesia|inverfin|idear)\s+/i, "");
+    t = t.replace(/\b(mañana|hoy|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo|recordar|recordarme|el)\b/ig, "");
+    t = t.replace(/\b(tengo|una|agenda|agendar|para las|a las|en)\b/ig, "");
+    t = t.replace(/\b(para las|a las)\s*\d{1,2}(:\d{2})?\b/ig, "");
+    t = t.replace(/\b\d{1,2}(:\d{2})?\s*hs\b/ig, "");
+  }
 
-  cleanTitle = cleanTitle.replace(/\s+/g, " ").trim();
-  if (cleanTitle.length > 0) cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
-  return cleanTitle || "Sin título";
+  t = t.replace(/✅/g, "");
+  t = t.replace(/\s+/g, " ").trim();
+  if (t.length > 0) t = capitalize(t);
+  
+  // Limpieza final por si quedó un "sobre" inicial de reuniones "reunion sobre..."
+  if (t.toLowerCase().startsWith("sobre ")) {
+      t = capitalize(t.substring(6));
+  }
+  
+  return t || "Sin título";
 }
 
 function classifyMessage(text: string, intent: string) {
@@ -154,126 +164,49 @@ function classifyMessage(text: string, intent: string) {
   if (lower.includes("urgente") || lower.includes("asap")) priority = "Urgente";
   else if (lower.includes("importante")) priority = "Alta";
 
-  let title = text;
-  if (intent === 'create_note') {
-    // Para notas, limpiamos menos para no perder contenido.
-    title = title.replace(/^(equantum|eQuantum|familia|iglesia|inverfin|idear)\s+/i, "");
-    title = title.replace(/^(nota|idea|anotar|apuntar):?\s*/i, "");
-    if (title.length > 0) title = title.charAt(0).toUpperCase() + title.slice(1);
-  } else {
-    title = cleanTitle(text);
-  }
+  const title = cleanTitle(text, intent);
 
   return { section, title, priority, ...dateTime };
 }
 
-// ==========================================
-// 3. FLUJOS DE ACCION
-// ==========================================
-
-async function handleCancel(chat_id: string, pendingAction: any) {
-  if (!pendingAction) {
-    await sendTelegramMessage(chat_id, "No hay ninguna acción pendiente.");
-    return;
-  }
-  await supabase
-    .from("telegram_pending_actions")
-    .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
-    .eq("id", pendingAction.id);
-  await sendTelegramMessage(chat_id, "❌ Acción cancelada.");
+function shouldAutoSave(intent: string, classData: any) {
+  if (!classData.section) return false;
+  if (!classData.title || classData.title.toLowerCase() === "sin título") return false;
+  return true;
 }
 
-async function handleCreate(chat_id: string, pendingAction: any) {
-  if (!pendingAction || pendingAction.status !== "pending") {
-    await sendTelegramMessage(chat_id, "No hay ninguna acción pendiente lista para confirmar.");
-    return;
-  }
+// ==========================================
+// 3. FLUJOS DIRECTOS
+// ==========================================
 
-  const actionType = pendingAction.action_type;
-  const payload = pendingAction.payload;
-
-  let error = null;
+async function checkDuplicates(actionType: string, classData: any) {
   if (actionType === "create_task") {
-    const { error: err } = await supabase.from("tasks").insert(payload);
-    error = err;
+    const { data } = await supabase.from("tasks").select("id").eq("title", classData.title).eq("section_id", classData.section).limit(1);
+    return data && data.length > 0;
   } else if (actionType === "create_meeting") {
-    const { error: err } = await supabase.from("meetings").insert(payload);
-    error = err;
-  } else if (actionType === "create_note") {
-    const { error: err } = await supabase.from("notes").insert(payload);
-    error = err;
-  } else {
-    await sendTelegramMessage(chat_id, "⚠️ Tipo de acción no soportada todavía.");
-    return;
+    const { data } = await supabase.from("meetings").select("id").eq("title", classData.title).eq("section_id", classData.section).eq("date", classData.isoDateOnly).limit(1);
+    return data && data.length > 0;
   }
-
-  if (error) {
-    console.error(`Error guardando ${actionType}:`, error);
-    await sendTelegramMessage(chat_id, "⚠️ Detecté esto, pero todavía no pude guardarlo por configuración interna.");
-  } else {
-    await supabase
-      .from("telegram_pending_actions")
-      .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
-      .eq("id", pendingAction.id);
-    
-    if (actionType === "create_task") await sendTelegramMessage(chat_id, "✅ Tarea creada correctamente.");
-    else if (actionType === "create_meeting") await sendTelegramMessage(chat_id, "✅ Reunión agendada correctamente.");
-    else if (actionType === "create_note") await sendTelegramMessage(chat_id, "✅ Nota guardada correctamente.");
-  }
+  return false;
 }
 
-async function handleQueries(chat_id: string, intent: string, text: string) {
-  const section = detectSection(text);
+function formatNaturalResponse(actionType: string, payload: any, classData: any) {
+  const sec = capitalize(payload.section_id);
+  const t = payload.title.toLowerCase().startsWith("reunión") ? payload.title.substring(8).trim() : payload.title;
+
+  if (actionType === "create_note") {
+    return `Listo señor, guardé la nota sobre ${t.toLowerCase()} en ${sec}.`;
+  }
+  if (actionType === "create_meeting") {
+    const d = classData.explicitDate;
+    const h = classData.timeLabel || "horario a definir";
+    return `Listo señor, agendé la reunión ${t.toLowerCase().includes("con") ? "" : "sobre"} ${t.toLowerCase()} para ${d} a las ${h} en ${sec}.`;
+  }
   
-  if (intent === "query_help") {
-    const msg = `🤖 *Asistente Quantum*\nPuedo ayudarte con esto:\n\n` +
-      `1. *Tareas*: "Familia leer la biblia a las 19"\n` +
-      `2. *Reuniones*: "Mañana reunión en Inverfin con Sony a las 10:30"\n` +
-      `3. *Notas*: "eQuantum nota: revisar carrito abandonado"\n` +
-      `4. *Consultas*: "Qué tengo para hoy?" o "Qué tengo pendiente en eQuantum?"\n\n` +
-      `Simplemente escribime lo que necesitás.`;
-    await sendTelegramMessage(chat_id, msg);
-    return;
-  }
-
-  if (intent === "query_today") {
-    const today = new Date().toISOString().split('T')[0];
-    const { data: tasks } = await supabase.from("tasks").select("*").not('status', 'eq', 'Terminada').like('due_date', `${today}%`);
-    const { data: meetings } = await supabase.from("meetings").select("*").eq('date', today);
-    
-    let msg = `📅 *Agenda de Hoy*\n\n`;
-    if ((!tasks || tasks.length === 0) && (!meetings || meetings.length === 0)) {
-      msg += "Libre! No tenés tareas ni reuniones agendadas para hoy.";
-    } else {
-      if (meetings && meetings.length > 0) {
-        msg += `*Reuniones:*\n`;
-        meetings.forEach(m => msg += `- ${m.start_time.slice(0,5)} | ${m.title} (${m.section_id})\n`);
-        msg += `\n`;
-      }
-      if (tasks && tasks.length > 0) {
-        msg += `*Tareas pendientes:*\n`;
-        tasks.forEach(t => msg += `- ${t.title} (${t.section_id})\n`);
-      }
-    }
-    await sendTelegramMessage(chat_id, msg);
-    return;
-  }
-
-  if (intent === "query_section_pending") {
-    if (!section) {
-      await sendTelegramMessage(chat_id, "¿De qué sección querés ver los pendientes? Respondé con: Familia, eQuantum, Inverfin, Iglesia o IDEAR.");
-      return;
-    }
-    const { data: tasks } = await supabase.from("tasks").select("*").eq("section_id", section).not('status', 'eq', 'Terminada');
-    if (!tasks || tasks.length === 0) {
-      await sendTelegramMessage(chat_id, `No tenés tareas pendientes en ${section}.`);
-    } else {
-      let msg = `📋 *Pendientes en ${section.toUpperCase()}*\n\n`;
-      tasks.forEach(t => msg += `- ${t.title} [${t.priority}]\n`);
-      await sendTelegramMessage(chat_id, msg);
-    }
-    return;
-  }
+  // Tasks / Reminders
+  const d = classData.explicitDate;
+  const h = classData.timeLabel ? ` a las ${classData.timeLabel}` : "";
+  return `Listo señor, guardé la tarea "${payload.title}" para ${d}${h} en ${sec}.`;
 }
 
 // ==========================================
@@ -295,7 +228,6 @@ serve(async (req) => {
 
     if (isBotGeneratedMessage(text)) return new Response("OK", { status: 200 });
 
-    // 1. Obtener acción pendiente actual
     const { data: currentPending } = await supabase
       .from("telegram_pending_actions")
       .select("*")
@@ -307,115 +239,115 @@ serve(async (req) => {
 
     const intent = detectIntent(text);
 
-    // 2. Resolver intents de comando directo
-    if (intent === "cancel_pending") {
-      await handleCancel(chat_id, currentPending);
-      return new Response("OK", { status: 200 });
-    }
-
-    if (intent === "confirm_pending") {
-      if (currentPending?.status === "needs_section") {
-        await sendTelegramMessage(chat_id, "⚠️ Todavía me falta la sección. Respondé con: Familia, eQuantum, Inverfin, Iglesia o IDEAR.");
-      } else {
-        await handleCreate(chat_id, currentPending);
-      }
-      return new Response("OK", { status: 200 });
-    }
-
-    // 3. Resolver flujo multi-turno (needs_section)
-    if (currentPending?.status === "needs_section") {
-      const detectedSection = detectSection(text);
-      if (!detectedSection) {
-        await sendTelegramMessage(chat_id, "❌ No reconocí la sección. Escribí Familia, eQuantum, Inverfin, Iglesia o IDEAR.");
-        return new Response("OK", { status: 200 });
-      }
-      
-      // Update payload
-      const updatedPayload = { ...currentPending.payload, section_id: detectedSection };
-      await supabase
-        .from("telegram_pending_actions")
-        .update({ payload: updatedPayload, status: "pending" })
-        .eq("id", currentPending.id);
-
-      // Re-preguntar
-      let msg = `Listo, entendí esto:\n\nSección: ${detectedSection}\nTítulo: ${updatedPayload.title}\n`;
-      msg += `\nRespondé CREAR o CANCELAR.`;
+    // Queries
+    if (intent === "query_help") {
+      const msg = `🤖 *Asistente Quantum*\nPuedo ayudarte con esto:\n\n` +
+        `1. *Tareas*: "Familia leer la biblia a las 19"\n` +
+        `2. *Reuniones*: "Mañana reunión en Inverfin con Sony a las 10:30"\n` +
+        `3. *Notas*: "Anota revisar carrito abandonado de GuaraMarket"\n` +
+        `4. *Consultas*: "Qué tengo para hoy?"\n\n` +
+        `Te responderé como tu asistente personal.`;
       await sendTelegramMessage(chat_id, msg);
       return new Response("OK", { status: 200 });
     }
 
-    // 4. Resolver Queries
-    if (intent.startsWith("query_")) {
-      await handleQueries(chat_id, intent, text);
+    if (intent === "query_today") {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: tasks } = await supabase.from("tasks").select("*").not('status', 'eq', 'Terminada').like('due_date', `${today}%`);
+      const { data: meetings } = await supabase.from("meetings").select("*").eq('date', today);
+      
+      let msg = `Señor, para hoy tenés:\n\n`;
+      if ((!tasks || tasks.length === 0) && (!meetings || meetings.length === 0)) {
+        msg = "Señor, para hoy no tenés tareas ni reuniones agendadas. ¡Día libre!";
+      } else {
+        if (meetings && meetings.length > 0) {
+          msg += `*Reuniones:*\n`;
+          meetings.forEach(m => msg += `- ${m.start_time.slice(0,5)} | ${m.title} (${m.section_id})\n`);
+          msg += `\n`;
+        }
+        if (tasks && tasks.length > 0) {
+          msg += `*Tareas pendientes:*\n`;
+          tasks.forEach(t => msg += `- ${t.title} (${t.section_id})\n`);
+        }
+      }
+      await sendTelegramMessage(chat_id, msg);
       return new Response("OK", { status: 200 });
     }
 
-    // 5. Flujo de Creación Nuevo
+    if (intent === "query_section_pending") {
+      const sec = detectSection(text);
+      if (!sec) {
+        await sendTelegramMessage(chat_id, "Señor, ¿de qué sección querés ver los pendientes? Respondé: Familia, eQuantum, Inverfin, Iglesia o IDEAR.");
+        return new Response("OK", { status: 200 });
+      }
+      const { data: tasks } = await supabase.from("tasks").select("*").eq("section_id", sec).not('status', 'eq', 'Terminada');
+      if (!tasks || tasks.length === 0) {
+        await sendTelegramMessage(chat_id, `Señor, no tenés tareas pendientes en ${capitalize(sec)}.`);
+      } else {
+        let msg = `Señor, aquí están los pendientes de ${capitalize(sec)}:\n\n`;
+        tasks.forEach(t => msg += `- ${t.title} [${t.priority}]\n`);
+        await sendTelegramMessage(chat_id, msg);
+      }
+      return new Response("OK", { status: 200 });
+    }
+
+    // Cancelar/Confirmar explicit (fallback manual)
+    if (intent === "cancel_pending") {
+      if (currentPending) {
+        await supabase.from("telegram_pending_actions").update({ status: "cancelled", cancelled_at: new Date().toISOString() }).eq("id", currentPending.id);
+        await sendTelegramMessage(chat_id, "Listo señor, lo descarté.");
+      } else {
+        await sendTelegramMessage(chat_id, "Señor, no tengo ninguna acción pendiente para cancelar.");
+      }
+      return new Response("OK", { status: 200 });
+    }
+
+    if (intent === "confirm_pending" && currentPending) {
+      if (currentPending.status === "needs_section") {
+        await sendTelegramMessage(chat_id, "Señor, todavía me falta saber la sección: Familia, eQuantum, Inverfin, Iglesia o IDEAR.");
+        return new Response("OK", { status: 200 });
+      }
+      
+      const payload = currentPending.payload;
+      const act = currentPending.action_type;
+      let err = null;
+      if (act === "create_task") err = (await supabase.from("tasks").insert(payload)).error;
+      else if (act === "create_meeting") err = (await supabase.from("meetings").insert(payload)).error;
+      else if (act === "create_note") err = (await supabase.from("notes").insert(payload)).error;
+      
+      if (err) {
+        await sendTelegramMessage(chat_id, "Señor, entendí el pedido, pero no pude guardarlo por un problema interno. Lo revisaré en el panel.");
+      } else {
+        await supabase.from("telegram_pending_actions").update({ status: "confirmed", confirmed_at: new Date().toISOString() }).eq("id", currentPending.id);
+        await sendTelegramMessage(chat_id, "Listo señor, lo guardé correctamente.");
+      }
+      return new Response("OK", { status: 200 });
+    }
+
+    // Supply section para multi-turno
+    if (currentPending?.status === "needs_section") {
+      const sec = detectSection(text);
+      if (!sec) {
+        await sendTelegramMessage(chat_id, "Señor, no reconocí la sección. ¿Es Familia, eQuantum, Inverfin, Iglesia o IDEAR?");
+        return new Response("OK", { status: 200 });
+      }
+      const updatedPayload = { ...currentPending.payload, section_id: sec };
+      await supabase.from("telegram_pending_actions").update({ payload: updatedPayload, status: "pending" }).eq("id", currentPending.id);
+      
+      await sendTelegramMessage(chat_id, `Entendido, sección ${capitalize(sec)}. ¿Desea guardarlo ahora? Respondé CREAR o CANCELAR.`);
+      return new Response("OK", { status: 200 });
+    }
+
+    // Nuevo comando regular
     const classData = classifyMessage(text, intent);
-
-    // Cancelar viejo si existe y el usuario empezó uno nuevo
-    if (currentPending) {
-      await supabase
-        .from("telegram_pending_actions")
-        .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
-        .eq("id", currentPending.id);
-    }
-
-    // Guardar logs de auditoria
-    const aiJson = {
-      itemType: intent,
-      intent: intent,
-      section: { sectionId: classData.section, reasoning: "Mock classifier" },
-      extractedData: {
-        title: classData.title,
-        date: classData.explicitDate,
-        isoDate: classData.isoDateTime,
-        priority: classData.priority
-      },
-      status: "ready"
-    };
-
-    const { data: tgLog } = await supabase.from("telegram_logs").insert({
-      telegram_update_id: update_id,
-      telegram_chat_id: chat_id,
-      telegram_user_id: from_id,
-      telegram_username: from_username,
-      message_text: text,
-      raw_payload: payload,
-      ai_raw_response: aiJson
-    }).select().single();
-
-    const tgLogId = tgLog?.id;
-    let whatsappLogId = null;
-    let aiClassificationId = null;
-    const { data: waLog } = await supabase.from("whatsapp_logs").insert({
-      message_sid: `tg_${update_id}_${Date.now()}`,
-      body: text,
-      sender_phone: from_username || from_id || "telegram",
-      ai_raw_response: aiJson
-    }).select("id").single();
-
-    if (waLog) {
-      whatsappLogId = waLog.id;
-      const { data: aiRes } = await supabase.from("ai_classifications").insert({
-        whatsapp_log_id: whatsappLogId,
-        original_text: text,
-        item_type: intent,
-        section_id: classData.section,
-        confidence: 0.9,
-        reasoning: "Assistant Flow",
-        extracted_data: aiJson.extractedData,
-        is_ambiguous: false
-      }).select("id").single();
-      if (aiRes) aiClassificationId = aiRes.id;
-    }
-
-    // Detect missing section
-    const needsSection = !classData.section;
-    const pendingStatus = needsSection ? "needs_section" : "pending";
-
-    let actionType = intent; // create_task, create_meeting, create_note
+    let actionType = intent; 
     if (intent === 'create_reminder') actionType = 'create_task';
+
+    // Anti-dupes
+    if (classData.section && await checkDuplicates(actionType, classData)) {
+      await sendTelegramMessage(chat_id, "Señor, ya existe algo parecido, así que no lo dupliqué.");
+      return new Response("OK", { status: 200 });
+    }
 
     let actionPayload: any = {};
     if (actionType === "create_task") {
@@ -451,49 +383,51 @@ serve(async (req) => {
       };
     }
 
-    // Anti-duplicados (solo si hay sección)
-    if (!needsSection) {
-      if (actionType === "create_task") {
-        const { data: dupes } = await supabase.from("tasks").select("id").eq("title", classData.title).eq("section_id", classData.section).limit(1);
-        if (dupes && dupes.length > 0) {
-          await sendTelegramMessage(chat_id, "Ya existe una tarea parecida. No lo dupliqué.");
-          return new Response("OK", { status: 200 });
-        }
-      } else if (actionType === "create_meeting") {
-        const { data: dupes } = await supabase.from("meetings").select("id").eq("title", classData.title).eq("section_id", classData.section).eq("date", classData.isoDateOnly).limit(1);
-        if (dupes && dupes.length > 0) {
-          await sendTelegramMessage(chat_id, "Ya existe una reunión parecida en esa fecha. No la dupliqué.");
-          return new Response("OK", { status: 200 });
-        }
-      }
+    const aiJson = {
+      itemType: intent,
+      intent: intent,
+      section: { sectionId: classData.section, reasoning: "Mock classifier natural" },
+      extractedData: { title: classData.title, date: classData.explicitDate, isoDate: classData.isoDateTime, priority: classData.priority },
+      status: "ready"
+    };
+
+    // Auditoria general
+    const { data: tgLog } = await supabase.from("telegram_logs").insert({ telegram_update_id: update_id, telegram_chat_id: chat_id, telegram_user_id: from_id, telegram_username: from_username, message_text: text, raw_payload: payload, ai_raw_response: aiJson }).select().single();
+    let waLogId = null, aiClassId = null;
+    const { data: waLog } = await supabase.from("whatsapp_logs").insert({ message_sid: `tg_${update_id}_${Date.now()}`, body: text, sender_phone: from_username || from_id || "telegram", ai_raw_response: aiJson }).select("id").single();
+    if (waLog) {
+      waLogId = waLog.id;
+      const { data: aiRes } = await supabase.from("ai_classifications").insert({ whatsapp_log_id: waLogId, original_text: text, item_type: intent, section_id: classData.section, confidence: 0.9, reasoning: "Assistant Flow Natural", extracted_data: aiJson.extractedData, is_ambiguous: false }).select("id").single();
+      if (aiRes) aiClassId = aiRes.id;
     }
 
-    await supabase.from("telegram_pending_actions").insert({
-      telegram_chat_id: chat_id,
-      telegram_user_id: from_id,
-      action_type: actionType,
-      status: pendingStatus,
-      classification_id: aiClassificationId,
-      telegram_log_id: tgLogId,
-      payload: actionPayload
-    });
+    if (currentPending) {
+      await supabase.from("telegram_pending_actions").update({ status: "cancelled", cancelled_at: new Date().toISOString() }).eq("id", currentPending.id);
+    }
 
-    if (needsSection) {
-      await sendTelegramMessage(chat_id, "¿En qué sección guardo esto? Respondé con: Familia, eQuantum, Inverfin, Iglesia o IDEAR.");
-    } else {
-      let msg = "";
-      if (actionType === "create_task") {
-        msg = `✅ Detecté una tarea.\n\nSección: ${classData.section}\nTítulo: ${classData.title}\nFecha: ${classData.explicitDate}`;
-        if (classData.timeLabel) msg += `\nHora: ${classData.timeLabel}`;
-        msg += `\nPrioridad: ${classData.priority}\n\nRespondé CREAR para guardarla como tarea.\nRespondé CANCELAR para descartarla.`;
-      } else if (actionType === "create_meeting") {
-        msg = `✅ Detecté una reunión.\n\nSección: ${classData.section}\nTítulo: ${classData.title}\nFecha: ${classData.explicitDate}`;
-        if (classData.timeLabel) msg += `\nHora: ${classData.timeLabel}`;
-        msg += `\n\nRespondé CREAR para agendarla.\nRespondé CANCELAR para descartarla.`;
-      } else if (actionType === "create_note") {
-        msg = `✅ Detecté una nota para ${classData.section}.\n\nTítulo: ${classData.title}\nContenido: ${text}\n\nRespondé CREAR para guardarla.`;
+    if (shouldAutoSave(intent, classData)) {
+      let err = null;
+      if (actionType === "create_task") err = (await supabase.from("tasks").insert(actionPayload)).error;
+      else if (actionType === "create_meeting") err = (await supabase.from("meetings").insert(actionPayload)).error;
+      else if (actionType === "create_note") err = (await supabase.from("notes").insert(actionPayload)).error;
+
+      if (err) {
+        await supabase.from("telegram_pending_actions").insert({ telegram_chat_id: chat_id, telegram_user_id: from_id, action_type: actionType, status: "pending", classification_id: aiClassId, telegram_log_id: tgLog?.id, payload: actionPayload });
+        await sendTelegramMessage(chat_id, "Señor, entendí el pedido, pero no pude guardarlo por un problema interno. Quedó pendiente.");
+      } else {
+        await supabase.from("telegram_pending_actions").insert({ telegram_chat_id: chat_id, telegram_user_id: from_id, action_type: actionType, status: "confirmed", confirmed_at: new Date().toISOString(), classification_id: aiClassId, telegram_log_id: tgLog?.id, payload: actionPayload });
+        await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, actionPayload, classData));
       }
-      await sendTelegramMessage(chat_id, msg);
+    } else {
+      // Necesita intervención
+      const pStatus = classData.section ? "pending" : "needs_section";
+      await supabase.from("telegram_pending_actions").insert({ telegram_chat_id: chat_id, telegram_user_id: from_id, action_type: actionType, status: pStatus, classification_id: aiClassId, telegram_log_id: tgLog?.id, payload: actionPayload });
+
+      if (pStatus === "needs_section") {
+        await sendTelegramMessage(chat_id, "Claro señor. ¿En qué sección lo guardo: Familia, eQuantum, Inverfin, Iglesia o IDEAR?");
+      } else {
+        await sendTelegramMessage(chat_id, `Señor, tengo la acción lista:\n\nTítulo: ${classData.title}\n\nRespondé CREAR para guardar o CANCELAR para descartar.`);
+      }
     }
 
     return new Response("OK", { status: 200 });
