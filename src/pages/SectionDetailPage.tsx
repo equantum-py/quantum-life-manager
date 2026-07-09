@@ -35,12 +35,12 @@ export function SectionDetailPage() {
         projectRepository.listProjects(),
       ]);
 
-      setSection(allSections.find((s) => s.id === sectionId) || null);
-      setTasks(allTasks.filter((t) => t.sectionId === sectionId));
-      setMeetings(allMeetings.filter((m) => m.sectionId === sectionId));
+      setSection(allSections.find((s) => s && s.id === sectionId) || null);
+      setTasks(allTasks.filter((t) => t && t.sectionId === sectionId));
+      setMeetings(allMeetings.filter((m) => m && m.sectionId === sectionId));
       
       if (sectionId === 'equantum') {
-        setProjects(allProjects.filter((p) => p.sectionId === sectionId));
+        setProjects(allProjects.filter((p) => p && p.sectionId === sectionId));
       }
 
     } catch (err: any) {

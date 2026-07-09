@@ -46,7 +46,7 @@ export function WhatsappTestPage() {
 
   const handleCreateItem = async () => {
     if (!result || result.status === 'ambiguous' || !result.classification.section.sectionId) {
-      setSaveError('Antes de guardar, elegí una sección (la clasificación es ambigua).');
+      setSaveError('No se pudo crear la tarea porque falta la sección.');
       return;
     }
     
@@ -59,11 +59,17 @@ export function WhatsappTestPage() {
 
     try {
       if (itemType === 'task' || itemType === 'reminder' || itemType === 'payment') {
+        const rawPriority = (extractedData.priority || '').toString().toLowerCase();
+        let normalizedPriority: Priority = 'Media';
+        if (rawPriority.includes('baja') || rawPriority.includes('low')) normalizedPriority = 'Baja';
+        else if (rawPriority.includes('alta') || rawPriority.includes('high')) normalizedPriority = 'Alta';
+        else if (rawPriority.includes('urgente') || rawPriority.includes('urgent')) normalizedPriority = 'Urgente';
+
         await taskRepository.createTask({
           title: extractedData.title,
           description: originalText,
           sectionId,
-          priority: (extractedData.priority as Priority) || 'Media',
+          priority: normalizedPriority,
           status: 'Pendiente',
           dueDate: extractedData.date || new Date().toISOString(),
           assignee: 'Sin asignar'

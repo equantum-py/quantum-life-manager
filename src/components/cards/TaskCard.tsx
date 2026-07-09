@@ -38,9 +38,9 @@ export function TaskCard({
         </div>
 
         <span
-          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${priorityStyles[task.priority]}`}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${priorityStyles[task.priority] || priorityStyles['Media']}`}
         >
-          {task.priority}
+          {task.priority || 'Media'}
         </span>
       </div>
 
@@ -48,7 +48,7 @@ export function TaskCard({
         <div>
           <p className="text-xs font-bold text-slate-400">Fecha límite</p>
           <p className="text-sm font-bold text-slate-800">
-            {prettyDate(task.dueDate)}
+            {task.dueDate ? prettyDate(task.dueDate) : 'Sin fecha'}
           </p>
         </div>
 

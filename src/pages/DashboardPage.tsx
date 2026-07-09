@@ -41,9 +41,9 @@ export function DashboardPage() {
         projectRepository.listProjects(),
       ]);
 
-      setSections(allSections.filter((s) => user.sections.includes(s.id)));
-      setTasks(allTasks.filter((t) => user.sections.includes(t.sectionId)));
-      setMeetings(allMeetings.filter((m) => user.sections.includes(m.sectionId)));
+      setSections(allSections.filter((s) => s && s.id && user.sections.includes(s.id)));
+      setTasks(allTasks.filter((t) => t && t.sectionId && user.sections.includes(t.sectionId)));
+      setMeetings(allMeetings.filter((m) => m && m.sectionId && user.sections.includes(m.sectionId)));
       setProjects(allProjects.filter(() => user.sections.includes('equantum')));
 
     } catch (err: any) {
@@ -76,20 +76,23 @@ export function DashboardPage() {
   const alerts = buildAlerts(tasks, meetings, projects);
 
   const todayTasks = tasks.filter(
-    (task) => isToday(task.dueDate) && task.status !== 'Terminada'
+    (task) => task && task.dueDate && isToday(task.dueDate) && task.status !== 'Terminada'
   );
 
   const overdueTasks = tasks.filter(
     (task) =>
+      task &&
+      task.dueDate &&
       (isPast(task.dueDate) || task.status === 'Vencida') &&
       task.status !== 'Terminada'
   );
 
   const nextMeetings = meetings
-    .filter((meeting) => meeting.date >= todayISO())
+    .filter((meeting) => meeting && meeting.date && meeting.date >= todayISO())
     .slice(0, 2);
 
   const priorityTask = [...todayTasks, ...overdueTasks].sort((a, b) => {
+    if (!a.priority || !b.priority) return 0;
     const order = {
       Urgente: 0,
       Alta: 1,

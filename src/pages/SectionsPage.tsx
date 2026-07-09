@@ -17,7 +17,7 @@ export function SectionsPage() {
       setLoading(true);
       setError(null);
       const data = await sectionRepository.listSections();
-      setSections(data.filter((s) => user.sections.includes(s.id)));
+      setSections(data.filter((s) => s && s.id && user.sections.includes(s.id)));
     } catch (err: any) {
       setError(err.message || 'Error al cargar secciones');
     } finally {

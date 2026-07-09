@@ -59,6 +59,8 @@ export function TasksPage() {
 
   const visible = items.filter(
     (task) =>
+      task &&
+      task.sectionId &&
       user.sections.includes(task.sectionId) &&
       (section === 'all' || task.sectionId === section) &&
       (status === 'all' || task.status === status) &&
@@ -67,13 +69,15 @@ export function TasksPage() {
 
   const todayCount = items.filter(
     (task) =>
-      user.sections.includes(task.sectionId) && task.dueDate === todayISO()
+      task && task.sectionId && user.sections.includes(task.sectionId) && task.dueDate === todayISO()
   ).length;
 
   const overdueCount = items.filter(
     (task) =>
+      task &&
+      task.sectionId &&
       user.sections.includes(task.sectionId) &&
-      isPast(task.dueDate) &&
+      task.dueDate && isPast(task.dueDate) &&
       task.status !== 'Terminada'
   ).length;
 

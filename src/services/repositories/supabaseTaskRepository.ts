@@ -9,14 +9,17 @@ export const supabaseTaskRepository: TaskRepository = {
     const { data, error } = await supabase!.from('tasks').select('*').order('created_at', { ascending: false });
     if (error) throw error;
     
-    // Convert snake_case to camelCase for the frontend
+    // Convert snake_case to camelCase for the frontend and ensure non-null critical values
     return data.map(d => ({
       ...d,
       sectionId: d.section_id,
       projectId: d.project_id,
-      dueDate: d.due_date,
-      createdAt: d.created_at,
-      updatedAt: d.updated_at,
+      dueDate: d.due_date || new Date().toISOString(),
+      createdAt: d.created_at || new Date().toISOString(),
+      updatedAt: d.updated_at || new Date().toISOString(),
+      priority: d.priority || 'Media',
+      status: d.status || 'Pendiente',
+      assignee: d.assignee || 'Sin asignar'
     })) as Task[];
   },
 
