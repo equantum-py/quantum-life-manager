@@ -38,10 +38,15 @@ El bot evalúa el mensaje entrante y detecta una de las siguientes intenciones (
 > **Usuario:** Qué tengo para hoy?
 > **Bot:** Señor, para hoy tenés... (Lista de tareas y reuniones, sin intentar crear nada).
 
-**5. Datos Faltantes (Multiturno & Fallback a CREAR)**
-> **Usuario:** Recordame llamar mañana
+**5. Datos Faltantes (Auto-guardado tras Sección)**
+> **Usuario:** mañana tengo una reunión con la gente de bristol agenda para las 10:35
 > **Bot:** Claro señor. ¿En qué sección lo guardo: Familia, eQuantum, Inverfin, Iglesia o IDEAR?
 > **Usuario:** Inverfin
+> **Bot:** Listo señor, agendé la reunión con Bristol para mañana a las 10:35 en Inverfin.
+*(Se normaliza el título, se crea en la base de datos respectiva y el registro pasa directo a confirmado).*
+
+**6. Ambigüedad (Fallback a CREAR/CANCELAR)**
+> **Usuario:** Recordame llamar mañana en Inverfin
 > **Bot:** Señor, tengo la acción lista: Título: Llamar mañana... Respondé CREAR para guardar o CANCELAR para descartar.
 
 ## Futuro del Parser

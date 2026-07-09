@@ -1,5 +1,8 @@
 # Checklist de Release: Fase de Estabilización
 
+## Estado de Desarrollo
+- **TG-8 Telegram Assistant 24/7:** Funcional y cerrado.
+
 ## Rutas y Componentes Verificados
 - [x] `/login`: Carga correctamente, mock/supabase mode ok.
 - [x] `/dashboard`: Carga datos sin romper.
@@ -17,20 +20,22 @@
 - [x] Validación de roles en Front-End para `/telegram` (acceso exclusivo `admin`).
 
 ## Integración Telegram & Supabase (Asistente 24/7)
-- [x] El bot responde a comandos de confirmación (`CREAR`, `CANCELAR`).
-- [x] Reenvíos del propio bot se bloquean mediante función `isBotMessage()`.
+- [x] El bot guarda notas directamente en `public.notes`.
+- [x] El bot agenda reuniones directamente en `public.meetings`.
 - [x] Se crean tareas reales en `public.tasks`.
-- [x] Se crean reuniones reales en `public.meetings`.
-- [x] Se crean notas reales en `public.notes`.
+- [x] Soporte Multi-turno (`needs_section`) con **auto-guardado automático** al recibir la sección. Ya no pide CREAR en este punto.
+- [x] Títulos de reuniones se normalizan y capitalizan (ej. "Reunión con Bristol").
+- [x] Reenvíos del propio bot se bloquean.
 - [x] Se soportan consultas como "Qué tengo para hoy?".
-- [x] Soporte Multi-turno (`needs_section`) cuando el bot no detecta el área de trabajo.
+- [x] Fallback a `CREAR`/`CANCELAR` solo para intenciones ambiguas.
 
 ## PWA
 - [x] Configuración básica: `index.html` cuenta con meta tags.
 - [x] `manifest.json` inicial creado en carpeta `public`.
 
-## Pendientes Conocidos
-- La IA real (OpenAI/Gemini) no está conectada por decisión de diseño actual.
+## Pendientes Conocidos (Futuro)
+- Conectar IA real (OpenAI/Gemini) para mejorar la detección avanzada de lenguaje natural.
+- Mejorar el panel visual de `/telegram` y limpiar datos de prueba.
 - Funciones de borrado, edición o confirmación en `/telegram` deshabilitadas.
 - Iconografía oficial PWA (PNGs variados en manifest) pendiente para fase UX/UI.
 
