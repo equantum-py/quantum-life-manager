@@ -25,20 +25,20 @@ export function TaskCard({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <p className="mb-2 text-[13px] font-bold uppercase tracking-wide text-slate-400">
-            {task.sectionId}
+            {task.sectionId || 'Sin sección'}
           </p>
 
           <h3 className="text-[20px] font-bold leading-snug tracking-tight text-slate-900">
-            {task.title}
+            {task.title || 'Sin título'}
           </h3>
 
           <p className="mt-2 text-[16px] font-normal leading-relaxed text-slate-500">
-            {task.description}
+            {task.description || ''}
           </p>
         </div>
 
         <span
-          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${priorityStyles[task.priority] || priorityStyles['Media']}`}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${priorityStyles[task.priority as keyof typeof priorityStyles] || priorityStyles['Media']}`}
         >
           {task.priority || 'Media'}
         </span>

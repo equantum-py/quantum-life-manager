@@ -41,8 +41,12 @@ export function TasksPage() {
       setLoading(true);
       setError(null);
       const data = await taskRepository.listTasks();
+      if (!Array.isArray(data)) {
+        throw new Error('La respuesta de Supabase no es un array válido de tareas.');
+      }
       setItems(data);
     } catch (err: any) {
+      console.error('Error al cargar tareas:', err);
       setError(err.message || 'Error al cargar tareas');
     } finally {
       setLoading(false);
@@ -194,7 +198,8 @@ export function TasksPage() {
 
       {error && (
         <div className="rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-600">
-          {error}
+          <p className="font-bold text-lg mb-2">No se pudieron cargar las tareas</p>
+          <p>{error}</p>
         </div>
       )}
 

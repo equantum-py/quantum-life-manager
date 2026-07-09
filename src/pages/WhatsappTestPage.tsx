@@ -13,6 +13,24 @@ export function WhatsappTestPage() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const normalizeTaskInputFromClassification = (extractedData: any, sectionId: string, originalText: string) => {
+    const rawPriority = (extractedData.priority || '').toString().toLowerCase();
+    let normalizedPriority: Priority = 'Media';
+    if (rawPriority.includes('baja') || rawPriority.includes('low')) normalizedPriority = 'Baja';
+    else if (rawPriority.includes('alta') || rawPriority.includes('high')) normalizedPriority = 'Alta';
+    else if (rawPriority.includes('urgente') || rawPriority.includes('urgent')) normalizedPriority = 'Urgente';
+
+    return {
+      title: extractedData.title || 'Sin título',
+      description: originalText || '',
+      sectionId: sectionId as SectionId,
+      priority: normalizedPriority,
+      status: 'Pendiente' as const,
+      dueDate: extractedData.date || new Date().toISOString(),
+      assignee: 'Sin asignar'
+    };
+  };
+
   const handleClassify = async (text: string) => {
     if (!text.trim()) return;
     setIsProcessing(true);
@@ -59,21 +77,9 @@ export function WhatsappTestPage() {
 
     try {
       if (itemType === 'task' || itemType === 'reminder' || itemType === 'payment') {
-        const rawPriority = (extractedData.priority || '').toString().toLowerCase();
-        let normalizedPriority: Priority = 'Media';
-        if (rawPriority.includes('baja') || rawPriority.includes('low')) normalizedPriority = 'Baja';
-        else if (rawPriority.includes('alta') || rawPriority.includes('high')) normalizedPriority = 'Alta';
-        else if (rawPriority.includes('urgente') || rawPriority.includes('urgent')) normalizedPriority = 'Urgente';
-
-        await taskRepository.createTask({
-          title: extractedData.title,
-          description: originalText,
-          sectionId,
-          priority: normalizedPriority,
-          status: 'Pendiente',
-          dueDate: extractedData.date || new Date().toISOString(),
-          assignee: 'Sin asignar'
-        });
+        const safeTaskData = normalizeTaskInputFromClassification(extractedData, sectionId, originalText);
+        console.log('Sending to taskRepository:', safeTaskData);
+        await taskRepository.createTask(safeTaskData);
         setSaveMessage('Tarea creada correctamente');
       } else if (itemType === 'note' || itemType === 'idea') {
         await noteRepository.createNote({
@@ -149,17 +155,7 @@ export function WhatsappTestPage() {
         </Button>
       </div>
 
-      {saveError && (
-        <div className="rounded-2xl bg-red-50 p-4 font-semibold text-red-600 shadow-sm">
-          {saveError}
-        </div>
-      )}
-
-      {saveMessage && !saveError && (
-        <div className="rounded-2xl bg-green-50 p-4 font-semibold text-green-700 shadow-sm">
-          {saveMessage}
-        </div>
-      )}
+      </div>
 
       {result && (
         <div className="space-y-4 rounded-[28px] border border-blue-200/50 bg-blue-50/70 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-xl">
@@ -236,6 +232,18 @@ export function WhatsappTestPage() {
               Cancelar
             </Button>
           </div>
+
+          {saveError && (
+            <div className="mt-4 rounded-2xl bg-red-50 p-4 font-semibold text-red-600 shadow-sm border border-red-100">
+              {saveError}
+            </div>
+          )}
+
+          {saveMessage && !saveError && (
+            <div className="mt-4 rounded-2xl bg-green-50 p-4 font-semibold text-green-700 shadow-sm border border-green-100">
+              {saveMessage}
+            </div>
+          )}
         </div>
       )}
     </div>
