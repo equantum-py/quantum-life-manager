@@ -363,7 +363,7 @@ serve(async (req) => {
 
     // Guardar logs de auditoria
     const aiJson = {
-      itemType: classData.itemType,
+      itemType: intent,
       intent: intent,
       section: { sectionId: classData.section, reasoning: "Mock classifier" },
       extractedData: {
@@ -455,10 +455,16 @@ serve(async (req) => {
     if (!needsSection) {
       if (actionType === "create_task") {
         const { data: dupes } = await supabase.from("tasks").select("id").eq("title", classData.title).eq("section_id", classData.section).limit(1);
-        if (dupes && dupes.length > 0) return new Response("OK", { status: 200 }, await sendTelegramMessage(chat_id, "Ya existe una tarea parecida. No lo dupliqué."));
+        if (dupes && dupes.length > 0) {
+          await sendTelegramMessage(chat_id, "Ya existe una tarea parecida. No lo dupliqué.");
+          return new Response("OK", { status: 200 });
+        }
       } else if (actionType === "create_meeting") {
         const { data: dupes } = await supabase.from("meetings").select("id").eq("title", classData.title).eq("section_id", classData.section).eq("date", classData.isoDateOnly).limit(1);
-        if (dupes && dupes.length > 0) return new Response("OK", { status: 200 }, await sendTelegramMessage(chat_id, "Ya existe una reunión parecida en esa fecha. No la dupliqué."));
+        if (dupes && dupes.length > 0) {
+          await sendTelegramMessage(chat_id, "Ya existe una reunión parecida en esa fecha. No la dupliqué.");
+          return new Response("OK", { status: 200 });
+        }
       }
     }
 
