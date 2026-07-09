@@ -1,5 +1,5 @@
 export type Role='admin'|'collaborator'|'family';export type SectionId='familia'|'iglesia'|'inverfin'|'equantum'|'idear';
-export interface User{id:string;name:string;email:string;password:string;role:Role;sections:SectionId[]}
+export interface User{id:string;name:string;email:string;password?:string;role:Role;sections:SectionId[]}
 export interface Section{id:SectionId;name:string;description:string;color:string;icon:string}
 export type TaskStatus='Pendiente'|'En progreso'|'En revisión'|'Bloqueada'|'Terminada'|'Vencida';export type Priority='Baja'|'Media'|'Alta'|'Urgente';
 export interface Task{id:string;title:string;description:string;sectionId:SectionId;projectId?:string;client?:string;priority:Priority;status:TaskStatus;dueDate:string;assignee:string;reminder?:string;createdAt:string;updatedAt:string}
