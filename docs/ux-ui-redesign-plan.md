@@ -19,7 +19,7 @@ Reestructurar la envoltura de la aplicación para garantizar comportamiento nati
 - **General Layout:** En desktop puede seguir existiendo el sidebar, pero en móvil debe ocultarse y priorizar el bottom nav.
 - **Padding y Estructura:** El contenido debe tener padding cómodo. No usar cards angostas como panel, usar max-width mobile cuando corresponda. Evitar que parezca una web comprimida.
 
-### UX-3: Login y Dashboard Premium
+### ~~UX-3: Login y Dashboard Premium~~ (COMPLETADO)
 - **Login Mobile:** Logo centrado arriba, título claro ("Bienvenido a Quantum"), inputs grandes redondeados, botón principal ancho, link secundario simple, mucho aire. Sin sidebar ni dashboard. Diseño pensado para instalar.
 - **Dashboard Mobile:** Título grande arriba ("Hola, Derlis"), subtítulo corto (fecha/resumen del día). Cards grandes tipo módulos (Hoy, Tareas, Agenda, Telegram, Secciones) con accesos rápidos redondeados. Menos tablas, más cards.
 

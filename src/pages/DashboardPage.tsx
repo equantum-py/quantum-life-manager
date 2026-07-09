@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarPlus, FileText, PlusCircle } from 'lucide-react';
+import { CalendarPlus, FileText, PlusCircle, MessageSquare } from 'lucide-react';
 import { AlertCard } from '../components/cards/AlertCard';
 import { MeetingCard } from '../components/cards/MeetingCard';
 import { SectionCard } from '../components/cards/SectionCard';
-import { StatCard } from '../components/cards/StatCard';
 import { TaskCard } from '../components/cards/TaskCard';
-import { PriorityCard } from '../components/dashboard/PriorityCard';
-import { QuickActionButton } from '../components/dashboard/QuickActionButton';
 import { authService } from '../services/authService';
 import {
   sectionRepository,
@@ -60,14 +57,14 @@ export function DashboardPage() {
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="text-sm font-semibold text-slate-400">Cargando tu panel...</p>
+        <p className="app-muted font-semibold text-[16px]">Cargando tu panel...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-600">
+      <div className="rounded-[var(--qlm-radius-md)] bg-red-50 p-6 text-[15px] font-bold text-red-600">
         {error}
       </div>
     );
@@ -89,29 +86,9 @@ export function DashboardPage() {
 
   const nextMeetings = meetings
     .filter((meeting) => meeting && meeting.date && meeting.date >= todayISO())
-    .slice(0, 2);
-
-  const priorityTask = [...todayTasks, ...overdueTasks].sort((a, b) => {
-    if (!a.priority || !b.priority) return 0;
-    const order = {
-      Urgente: 0,
-      Alta: 1,
-      Media: 2,
-      Baja: 3,
-    } as const;
-    return order[a.priority] - order[b.priority];
-  })[0];
+    .slice(0, 3);
 
   const mainAlert = alerts[0];
-  const nextMeeting = nextMeetings[0];
-
-  const mobileStats = [
-    { label: 'Hoy', value: todayTasks.length, tone: 'text-blue-600' },
-    { label: 'Vencidas', value: overdueTasks.length, tone: 'text-red-600' },
-    { label: 'Reuniones', value: nextMeetings.length, tone: 'text-violet-600' },
-    { label: 'Alertas', value: alerts.length, tone: 'text-amber-600' },
-    { label: 'Proyectos', value: projects.length, tone: 'text-emerald-600' },
-  ];
 
   return (
     <>
@@ -121,14 +98,7 @@ export function DashboardPage() {
         todayTasks={todayTasks}
         overdueTasks={overdueTasks}
         nextMeetings={nextMeetings}
-        priorityTask={priorityTask}
         mainAlert={mainAlert}
-        nextMeetingTitle={
-          nextMeeting
-            ? `${nextMeeting.title} a las ${nextMeeting.startTime}`
-            : 'sin reuniones próximas'
-        }
-        stats={mobileStats}
       />
 
       <DesktopDashboard
@@ -148,145 +118,158 @@ function MobileDashboard({
   todayTasks,
   overdueTasks,
   nextMeetings,
-  priorityTask,
   mainAlert,
-  nextMeetingTitle,
-  stats,
 }: {
   userName: string;
   sections: Section[];
   todayTasks: Task[];
   overdueTasks: Task[];
   nextMeetings: Meeting[];
-  priorityTask?: Task;
   mainAlert?: any;
-  nextMeetingTitle: string;
-  stats: { label: string; value: number | string; tone: string }[];
 }) {
+  const isOrganized = overdueTasks.length === 0 && mainAlert === undefined;
+
   return (
     <div className="space-y-8 md:hidden">
-      <section className="space-y-4">
-        <div className="mb-2">
-          <h2 className="text-[24px] font-bold tracking-tight text-slate-900">
-            Tus áreas
-          </h2>
-          <p className="text-[15px] font-medium text-slate-500">
-            Organizá tu día desde cada parte de tu vida.
-          </p>
-        </div>
+      {/* A. Header contextual */}
+      <section className="mb-2">
+        <p className="app-muted mb-1 text-[13px] font-bold uppercase tracking-wider">{prettyDate(new Date())}</p>
+        <h1 className="app-mobile-title mb-1">
+          Hola, {userName}
+        </h1>
+        <p className="text-[17px] font-medium text-slate-500">
+          Este es tu resumen de hoy
+        </p>
+      </section>
 
-        {sections.map((section) => (
-          <SectionCard
-            key={section.id}
-            section={section}
-            pending={
-              todayTasks.filter((task) => task.sectionId === section.id).length
-            }
-            hasAlert={overdueTasks.some(
-              (task) => task.sectionId === section.id
+      {/* B. Hero card / resumen del día */}
+      <section>
+        <div className="app-card bg-[var(--qlm-primary)] border-none text-white shadow-[var(--qlm-shadow-premium)] relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full bg-white opacity-10 blur-2xl"></div>
+          
+          <h2 className="text-[22px] font-black leading-tight tracking-tight mb-4 relative z-10">
+            {isOrganized ? 'Día organizado ✨' : 'Tenés pendientes importantes'}
+          </h2>
+          
+          <div className="flex items-center gap-6 relative z-10">
+            <div>
+              <span className="block text-[32px] font-black leading-none">{todayTasks.length}</span>
+              <span className="text-[14px] font-semibold text-blue-100">Tareas de hoy</span>
+            </div>
+            {overdueTasks.length > 0 && (
+              <div>
+                <span className="block text-[32px] font-black leading-none text-red-300">{overdueTasks.length}</span>
+                <span className="text-[14px] font-semibold text-red-100">Vencidas</span>
+              </div>
             )}
-          />
-        ))}
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-[20px] font-bold tracking-tight text-slate-900">
-          Resumen de hoy
-        </h2>
-        <div className="rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-          <h3 className="text-[18px] font-semibold text-slate-900">
-            Hola, {userName}
-          </h3>
-          <p className="mt-2 text-[15px] leading-relaxed text-slate-600">
-            Tenés <strong className="font-semibold text-blue-700">{todayTasks.length} tareas</strong> para hoy,{' '}
-            <strong className="font-semibold text-red-600">{overdueTasks.length} vencida{overdueTasks.length !== 1 && 's'}</strong> y{' '}
-            <strong className="font-semibold text-violet-700">{nextMeetingTitle}</strong>.
-          </p>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
-          Prioridad ahora
-        </h2>
-        <PriorityCard task={priorityTask} />
-      </section>
-
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
-            Acciones rápidas
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          <QuickActionButton
-            to="/tasks"
-            icon={PlusCircle}
-            label="Nueva tarea"
-            tone="bg-blue-50 text-blue-700"
-          />
-
-          <QuickActionButton
-            to="/agenda"
-            icon={CalendarPlus}
-            label="Nuevo evento"
-            tone="bg-violet-50 text-violet-700"
-          />
-
-          <QuickActionButton
-            to="/notes"
-            icon={FileText}
-            label="Nueva nota"
-            tone="bg-emerald-50 text-emerald-700"
-          />
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
-            Próximas tareas
-          </h2>
-
-          <Link to="/tasks" className="text-sm font-black text-blue-700">
-            Ver todas
-          </Link>
-        </div>
-
-        {todayTasks.slice(0, 2).map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
-            Próximas reuniones
-          </h2>
-
-          <Link to="/agenda" className="text-sm font-black text-blue-700">
-            Ver agenda
-          </Link>
-        </div>
-
-        {nextMeetings.slice(0, 1).map((meeting) => (
-          <MeetingCard key={meeting.id} meeting={meeting} />
-        ))}
-      </section>
-
-      {mainAlert && (
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
-              Alerta principal
-            </h2>
-
-            <Link to="/alerts" className="text-sm font-black text-blue-700">
-              Ver alertas
-            </Link>
+            <div>
+              <span className="block text-[32px] font-black leading-none">{nextMeetings.length}</span>
+              <span className="text-[14px] font-semibold text-blue-100">Reuniones</span>
+            </div>
           </div>
+        </div>
+      </section>
 
+      {/* C. Acciones rápidas */}
+      <section>
+        <h2 className="app-section-title">Acciones rápidas</h2>
+        <div className="grid grid-cols-4 gap-3">
+          <Link to="/tasks" className="app-card-soft tap flex flex-col items-center justify-center p-3">
+             <div className="bg-blue-100 text-blue-700 h-12 w-12 rounded-full grid place-items-center mb-2 shadow-sm">
+               <PlusCircle size={24} />
+             </div>
+             <span className="text-[12px] font-bold text-slate-700">Tarea</span>
+          </Link>
+          <Link to="/agenda" className="app-card-soft tap flex flex-col items-center justify-center p-3">
+             <div className="bg-violet-100 text-violet-700 h-12 w-12 rounded-full grid place-items-center mb-2 shadow-sm">
+               <CalendarPlus size={24} />
+             </div>
+             <span className="text-[12px] font-bold text-slate-700">Evento</span>
+          </Link>
+          <Link to="/notes" className="app-card-soft tap flex flex-col items-center justify-center p-3">
+             <div className="bg-emerald-100 text-emerald-700 h-12 w-12 rounded-full grid place-items-center mb-2 shadow-sm">
+               <FileText size={24} />
+             </div>
+             <span className="text-[12px] font-bold text-slate-700">Nota</span>
+          </Link>
+          <Link to="/telegram" className="app-card-soft tap flex flex-col items-center justify-center p-3">
+             <div className="bg-sky-100 text-sky-600 h-12 w-12 rounded-full grid place-items-center mb-2 shadow-sm">
+               <MessageSquare size={24} />
+             </div>
+             <span className="text-[12px] font-bold text-slate-700">Bot</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* D. Secciones principales */}
+      <section>
+        <h2 className="app-section-title">Tus áreas</h2>
+        <div className="flex flex-col gap-3">
+          {sections.map((section) => (
+            <SectionCard
+              key={section.id}
+              section={section}
+              pending={
+                todayTasks.filter((task) => task.sectionId === section.id).length
+              }
+              hasAlert={overdueTasks.some(
+                (task) => task.sectionId === section.id
+              )}
+            />
+          ))}
+          {sections.length === 0 && (
+            <div className="app-card-soft text-center p-6">
+              <p className="app-muted font-semibold">No hay áreas activas.</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* E. Próximas tareas */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="app-section-title !mb-0">Próximas tareas</h2>
+          <Link to="/tasks" className="app-pill !px-4 !py-1.5 !text-sm">Ver todas</Link>
+        </div>
+        <div className="flex flex-col gap-3">
+          {todayTasks.length > 0 ? (
+            todayTasks.slice(0, 5).map((task) => (
+              <TaskCard key={task.id} task={task} />
+            ))
+          ) : (
+            <div className="app-card-soft text-center p-6">
+              <p className="app-muted font-semibold">Sin tareas pendientes por ahora.</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* F. Próximas reuniones */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="app-section-title !mb-0">Agenda próxima</h2>
+          <Link to="/agenda" className="app-pill !px-4 !py-1.5 !text-sm">Ver todo</Link>
+        </div>
+        <div className="flex flex-col gap-3">
+          {nextMeetings.length > 0 ? (
+            nextMeetings.slice(0, 3).map((meeting) => (
+              <MeetingCard key={meeting.id} meeting={meeting} />
+            ))
+          ) : (
+            <div className="app-card-soft text-center p-6">
+              <p className="app-muted font-semibold">No tenés reuniones para hoy.</p>
+            </div>
+          )}
+        </div>
+      </section>
+      
+      {/* Alerta principal (si existe) */}
+      {mainAlert && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="app-section-title !mb-0">Alerta principal</h2>
+            <Link to="/alerts" className="app-pill !px-4 !py-1.5 !text-sm">Alertas</Link>
+          </div>
           <AlertCard alert={mainAlert} />
         </section>
       )}
@@ -298,7 +281,6 @@ function DesktopDashboard({
   sections,
   tasks,
   meetings,
-  projects,
   alerts,
 }: {
   sections: Section[];
@@ -308,66 +290,60 @@ function DesktopDashboard({
   alerts: any[];
 }) {
   return (
-    <div className="hidden space-y-5 md:block">
-      <section className="rounded-[2rem] bg-blue-600 p-6 text-white shadow-soft">
-        <p className="text-blue-100">{prettyDate(new Date())}</p>
+    <div className="hidden md:grid md:grid-cols-2 md:gap-8">
+      {/* Columna Izquierda */}
+      <div className="space-y-6">
+        <section className="app-card bg-[var(--qlm-primary)] text-white border-none shadow-[var(--qlm-shadow-premium)] p-8">
+          <p className="text-blue-200 font-semibold mb-2 uppercase tracking-wide text-sm">{prettyDate(new Date())}</p>
+          <h2 className="text-4xl font-black mb-3">Panel Principal</h2>
+          <p className="text-lg text-blue-100 font-medium">Resumen de tareas, reuniones, alertas y áreas activas.</p>
+        </section>
 
-        <h2 className="mt-1 text-3xl font-extrabold">
-          Panel principal
-        </h2>
-
-        <p className="mt-2 text-sm text-blue-100">
-          Resumen de tareas, reuniones, alertas y áreas activas.
-        </p>
-      </section>
-
-      <div className="grid grid-cols-5 gap-3">
-        <StatCard
-          label="Hoy"
-          value={tasks.filter((task) => isToday(task.dueDate)).length}
-        />
-
-        <StatCard
-          label="Vencidas"
-          value={
-            tasks.filter(
-              (task) => isPast(task.dueDate) || task.status === 'Vencida'
-            ).length
-          }
-        />
-
-        <StatCard label="Reuniones" value={meetings.length} />
-        <StatCard label="Alertas" value={alerts.length} />
-        <StatCard label="Proyectos" value={projects.length} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-5">
-        <div className="space-y-3">
-          <h2 className="text-lg font-bold">Tareas de hoy</h2>
-
-          {tasks
-            .filter((task) => isToday(task.dueDate))
-            .slice(0, 3)
-            .map((task) => (
-              <TaskCard key={task.id} task={task} />
+        <section>
+          <h2 className="app-section-title">Tus áreas</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {sections.map((section) => (
+              <SectionCard key={section.id} section={section} />
             ))}
-        </div>
-
-        <div className="space-y-3">
-          <h2 className="text-lg font-bold">Alertas importantes</h2>
-
-          {alerts.slice(0, 3).map((alert) => (
-            <AlertCard key={alert.id} alert={alert} />
-          ))}
-        </div>
+          </div>
+        </section>
       </div>
 
-      <h2 className="text-lg font-bold">Tus secciones</h2>
+      {/* Columna Derecha */}
+      <div className="space-y-6">
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="app-section-title !mb-0">Tareas de hoy</h2>
+            <Link to="/tasks" className="app-pill">Ver todas</Link>
+          </div>
+          <div className="space-y-3">
+            {tasks
+              .filter((task) => isToday(task.dueDate))
+              .slice(0, 4)
+              .map((task) => (
+                <TaskCard key={task.id} task={task} />
+              ))}
+            {tasks.filter((task) => isToday(task.dueDate)).length === 0 && (
+              <div className="app-card-soft text-center p-6">
+                <p className="app-muted font-semibold">Sin tareas pendientes por ahora.</p>
+              </div>
+            )}
+          </div>
+        </section>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        {sections.map((section) => (
-          <SectionCard key={section.id} section={section} />
-        ))}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+             <h2 className="app-section-title !mb-0">Alertas y Reuniones</h2>
+          </div>
+          <div className="space-y-3">
+            {alerts.slice(0, 2).map((alert) => (
+              <AlertCard key={alert.id} alert={alert} />
+            ))}
+            {meetings.slice(0, 2).map((meeting) => (
+              <MeetingCard key={meeting.id} meeting={meeting} />
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );
