@@ -11,8 +11,11 @@ export function WhatsappTestPage() {
   const [inputMessage, setInputMessage] = useState('');
   const [result, setResult] = useState<ProcessedMessageResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCreatingItem, setIsCreatingItem] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [createdItemId, setCreatedItemId] = useState<string | null>(null);
+  const [createdItemType, setCreatedItemType] = useState<string | null>(null);
 
   const normalizeTaskInputFromClassification = (extractedData: any, sectionId: string, originalText: string) => {
     const rawPriority = (extractedData.priority || '').toString().toLowerCase();
@@ -38,6 +41,8 @@ export function WhatsappTestPage() {
     setResult(null);
     setSaveMessage(null);
     setSaveError(null);
+    setCreatedItemId(null);
+    setCreatedItemType(null);
     
     try {
       const simulatedIncoming = {
@@ -64,34 +69,40 @@ export function WhatsappTestPage() {
   };
 
   const handleCreateItem = async () => {
+    if (createdItemId) return;
     if (!result || result.status === 'ambiguous' || !result.classification.section.sectionId) {
       setSaveError('No se pudo crear la tarea porque falta la sección.');
       return;
     }
     
-    setIsProcessing(true);
+    setIsCreatingItem(true);
     setSaveError(null);
     setSaveMessage(null);
 
     const { itemType, section, extractedData, originalText } = result.classification;
     const sectionId = section.sectionId as SectionId;
+    const taskTypes = ['task', 'reminder', 'payment', 'academic_delivery', 'delivery', 'assignment', 'homework', 'exam', 'study', 'class_task'];
 
     try {
-      if (itemType === 'task' || itemType === 'reminder' || itemType === 'payment') {
+      if (taskTypes.includes(itemType)) {
         const safeTaskData = normalizeTaskInputFromClassification(extractedData, sectionId, originalText);
         console.log('Sending to taskRepository:', safeTaskData);
-        await taskRepository.createTask(safeTaskData);
-        setSaveMessage('Tarea creada correctamente');
+        const createdTask = await taskRepository.createTask(safeTaskData);
+        setCreatedItemId(createdTask.id);
+        setCreatedItemType('tarea');
+        setSaveMessage('Tarea creada correctamente.');
       } else if (itemType === 'note' || itemType === 'idea') {
-        await noteRepository.createNote({
+        const createdNote = await noteRepository.createNote({
           title: extractedData.title,
           content: originalText,
           sectionId,
           category: 'General'
         });
-        setSaveMessage('Nota creada correctamente');
+        setCreatedItemId(createdNote.id);
+        setCreatedItemType('nota');
+        setSaveMessage('Nota creada correctamente.');
       } else if (itemType === 'meeting' || itemType === 'event') {
-        await meetingRepository.createMeeting({
+        const createdMeeting = await meetingRepository.createMeeting({
           title: extractedData.title,
           description: originalText,
           sectionId,
@@ -102,14 +113,15 @@ export function WhatsappTestPage() {
           participants: [],
           status: 'Agendado'
         });
-        setSaveMessage('Reunión creada correctamente');
+        setCreatedItemId(createdMeeting.id);
+        setCreatedItemType('reunión');
+        setSaveMessage('Reunión creada correctamente.');
       }
-      // After success, we keep the result visible for auditing as requested by user.
     } catch (e: any) {
       console.error(e);
       setSaveError(e.message || 'Error al crear la entidad.');
     } finally {
-      setIsProcessing(false);
+      setIsCreatingItem(false);
     }
   };
 
@@ -208,25 +220,25 @@ export function WhatsappTestPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-200/60 mt-4">
-            {(result.classification.itemType === 'task' || result.classification.itemType === 'reminder' || result.classification.itemType === 'payment') && (
-              <Button onClick={handleCreateItem} disabled={isProcessing || result.status === 'ambiguous'} className="bg-indigo-600 hover:bg-indigo-700">
-                Crear tarea
+            {['task', 'reminder', 'payment', 'academic_delivery', 'delivery', 'assignment', 'homework', 'exam', 'study', 'class_task'].includes(result.classification.itemType) && (
+              <Button onClick={handleCreateItem} disabled={isCreatingItem || !!createdItemId || result.status === 'ambiguous'} className="bg-indigo-600 hover:bg-indigo-700">
+                {createdItemId ? 'Tarea ya creada' : 'Crear tarea'}
               </Button>
             )}
             
-            {(result.classification.itemType === 'note' || result.classification.itemType === 'idea') && (
-              <Button onClick={handleCreateItem} disabled={isProcessing || result.status === 'ambiguous'} className="bg-indigo-600 hover:bg-indigo-700">
-                Crear nota
+            {['note', 'idea'].includes(result.classification.itemType) && (
+              <Button onClick={handleCreateItem} disabled={isCreatingItem || !!createdItemId || result.status === 'ambiguous'} className="bg-indigo-600 hover:bg-indigo-700">
+                {createdItemId ? 'Nota ya creada' : 'Crear nota'}
               </Button>
             )}
             
-            {(result.classification.itemType === 'meeting' || result.classification.itemType === 'event') && (
-              <Button onClick={handleCreateItem} disabled={isProcessing || result.status === 'ambiguous'} className="bg-indigo-600 hover:bg-indigo-700">
-                Crear reunión
+            {['meeting', 'event'].includes(result.classification.itemType) && (
+              <Button onClick={handleCreateItem} disabled={isCreatingItem || !!createdItemId || result.status === 'ambiguous'} className="bg-indigo-600 hover:bg-indigo-700">
+                {createdItemId ? 'Reunión ya creada' : 'Crear reunión'}
               </Button>
             )}
 
-            <Button className="bg-slate-100 text-slate-700 hover:bg-slate-200" onClick={() => setResult(null)} disabled={isProcessing}>
+            <Button className="bg-slate-100 text-slate-700 hover:bg-slate-200" onClick={() => setResult(null)} disabled={isCreatingItem}>
               Cancelar
             </Button>
           </div>
