@@ -3,6 +3,10 @@ import { Button } from '../components/ui/Button';
 import { Textarea } from '../components/ui/Textarea';
 import { ProcessedMessageResult, whatsappIngestionService } from '../services/whatsappIngestionService';
 import { mockIncomingMessages } from '../data/mockWhatsappMessages';
+import { taskRepository } from '../services/repositories/taskRepository';
+import { noteRepository } from '../services/repositories/noteRepository';
+import { meetingRepository } from '../services/repositories/meetingRepository';
+import { SectionId, Priority } from '../types';
 
 export function WhatsappTestPage() {
   const [inputMessage, setInputMessage] = useState('');
@@ -40,6 +44,62 @@ export function WhatsappTestPage() {
 
   const loadExample = (text: string) => {
     setInputMessage(text);
+  };
+
+  const handleCreateItem = async () => {
+    if (!result || result.status === 'ambiguous' || !result.classification.section.sectionId) {
+      setSaveError('Antes de guardar, elegí una sección (la clasificación es ambigua).');
+      return;
+    }
+    
+    setIsProcessing(true);
+    setSaveError(null);
+    setSaveMessage(null);
+
+    const { itemType, section, extractedData, originalText } = result.classification;
+    const sectionId = section.sectionId as SectionId;
+
+    try {
+      if (itemType === 'task' || itemType === 'reminder' || itemType === 'payment') {
+        await taskRepository.createTask({
+          title: extractedData.title,
+          description: originalText,
+          sectionId,
+          priority: (extractedData.priority as Priority) || 'Media',
+          status: 'Pendiente',
+          dueDate: extractedData.date || new Date().toISOString(),
+          assignee: 'Sin asignar'
+        });
+        setSaveMessage('Tarea creada correctamente');
+      } else if (itemType === 'note' || itemType === 'idea') {
+        await noteRepository.createNote({
+          title: extractedData.title,
+          content: originalText,
+          sectionId,
+          category: 'General'
+        });
+        setSaveMessage('Nota creada correctamente');
+      } else if (itemType === 'meeting' || itemType === 'event') {
+        await meetingRepository.createMeeting({
+          title: extractedData.title,
+          description: originalText,
+          sectionId,
+          date: extractedData.date || new Date().toISOString().split('T')[0],
+          startTime: extractedData.startTime || '09:00',
+          endTime: extractedData.endTime || '10:00',
+          type: itemType === 'meeting' ? 'Reunión' : 'Evento',
+          participants: [],
+          status: 'Agendado'
+        });
+        setSaveMessage('Reunión creada correctamente');
+      }
+      // After success, we keep the result visible for auditing as requested by user.
+    } catch (e: any) {
+      console.error(e);
+      setSaveError(e.message || 'Error al crear la entidad.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -147,6 +207,30 @@ export function WhatsappTestPage() {
             <pre className="overflow-x-auto rounded-2xl bg-slate-900 p-4 text-xs text-green-400">
               {JSON.stringify(result.classification, null, 2)}
             </pre>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-200/60 mt-4">
+            {(result.classification.itemType === 'task' || result.classification.itemType === 'reminder' || result.classification.itemType === 'payment') && (
+              <Button onClick={handleCreateItem} disabled={isProcessing || result.status === 'ambiguous'} className="bg-indigo-600 hover:bg-indigo-700">
+                Crear tarea
+              </Button>
+            )}
+            
+            {(result.classification.itemType === 'note' || result.classification.itemType === 'idea') && (
+              <Button onClick={handleCreateItem} disabled={isProcessing || result.status === 'ambiguous'} className="bg-indigo-600 hover:bg-indigo-700">
+                Crear nota
+              </Button>
+            )}
+            
+            {(result.classification.itemType === 'meeting' || result.classification.itemType === 'event') && (
+              <Button onClick={handleCreateItem} disabled={isProcessing || result.status === 'ambiguous'} className="bg-indigo-600 hover:bg-indigo-700">
+                Crear reunión
+              </Button>
+            )}
+
+            <Button variant="outline" onClick={() => setResult(null)} disabled={isProcessing}>
+              Cancelar
+            </Button>
           </div>
         </div>
       )}
