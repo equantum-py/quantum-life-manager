@@ -16,11 +16,14 @@
 - [x] RLS intactos.
 - [x] Validación de roles en Front-End para `/telegram` (acceso exclusivo `admin`).
 
-## Integración Telegram & Supabase
+## Integración Telegram & Supabase (Asistente 24/7)
 - [x] El bot responde a comandos de confirmación (`CREAR`, `CANCELAR`).
 - [x] Reenvíos del propio bot se bloquean mediante función `isBotMessage()`.
-- [x] Se crean tareas reales en base de datos.
-- [x] El webhook parsea adecuadamente (mock clasificador temporal).
+- [x] Se crean tareas reales en `public.tasks`.
+- [x] Se crean reuniones reales en `public.meetings`.
+- [x] Se crean notas reales en `public.notes`.
+- [x] Se soportan consultas como "Qué tengo para hoy?".
+- [x] Soporte Multi-turno (`needs_section`) cuando el bot no detecta el área de trabajo.
 
 ## PWA
 - [x] Configuración básica: `index.html` cuenta con meta tags.

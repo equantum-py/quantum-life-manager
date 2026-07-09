@@ -19,9 +19,10 @@ El código base se encuentra estable y funcional, con todos los conductos de dat
 - Micro-interacciones al hacer tap o hover.
 
 ## 4. Mejoras en Agenda y Panel Telegram
-- Agenda visual con formato tipo calendario scrollable en lugar de listas rígidas.
+- Agenda visual con formato tipo calendario scrollable en lugar de listas rígidas. Deberá hidratarse visualizando tanto `tasks` como las nuevas `meetings`.
 - Rediseño de las Cards de Telegram para parecerse más a notificaciones de chat.
 - Inclusión de avatares automáticos (initials o colores hash basados en el username del sender).
+- Mostrar secciones visuales dedicadas a "Notas" en el Dashboard principal dado que Telegram ya permite guardarlas.
 
 ## 5. Aplicación Web Progresiva (PWA)
 - Pulir `public/manifest.json` con todos los iconos requeridos (192x192, 512x512, máscaras).
