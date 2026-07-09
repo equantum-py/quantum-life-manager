@@ -173,7 +173,7 @@ function cleanTitle(text: string, intent: string) {
   }
   
   if (intent === 'create_meeting' && t.toLowerCase().startsWith("con ")) {
-      t = "Reunión " + t;
+      t = "Reunión " + t.charAt(0).toLowerCase() + t.slice(1);
   }
   
   t = capitalizeNames(t);
@@ -219,7 +219,7 @@ async function checkDuplicates(actionType: string, classData: any) {
   return false;
 }
 
-function formatNaturalResponse(actionType: string, payload: any, classData: any) {
+function formatNaturalResponse(actionType: string, payload: any, classData: any = null) {
   const sec = capitalize(payload.section_id);
   const rawTitle = payload.title;
 
@@ -227,8 +227,8 @@ function formatNaturalResponse(actionType: string, payload: any, classData: any)
     return `Listo señor, guardé la nota sobre ${rawTitle.toLowerCase()} en ${sec}.`;
   }
   if (actionType === "create_meeting") {
-    const d = classData.explicitDate;
-    const h = classData.timeLabel || "horario a definir";
+    const d = classData?.explicitDate || payload.date || "hoy";
+    const h = classData?.timeLabel || (payload.start_time ? payload.start_time.slice(0, 5) : "horario a definir");
     let t = rawTitle;
     if (t.toLowerCase().startsWith("reunión ")) {
       t = t.substring(8).trim();
@@ -242,8 +242,9 @@ function formatNaturalResponse(actionType: string, payload: any, classData: any)
   }
   
   // Tasks / Reminders
-  const d = classData.explicitDate;
-  const h = classData.timeLabel ? ` a las ${classData.timeLabel}` : "";
+  const d = classData?.explicitDate || (payload.due_date ? payload.due_date.split('T')[0] : "hoy");
+  const timeStr = classData?.timeLabel || (payload.due_date ? payload.due_date.split('T')[1]?.slice(0, 5) : "");
+  const h = (timeStr && timeStr !== "00:00") ? ` a las ${timeStr}` : "";
   return `Listo señor, guardé la tarea "${payload.title}" para ${d}${h} en ${sec}.`;
 }
 
@@ -369,10 +370,33 @@ serve(async (req) => {
         await sendTelegramMessage(chat_id, "Señor, no reconocí la sección. ¿Es Familia, eQuantum, Inverfin, Iglesia o IDEAR?");
         return new Response("OK", { status: 200 });
       }
-      const updatedPayload = { ...currentPending.payload, section_id: sec };
-      await supabase.from("telegram_pending_actions").update({ payload: updatedPayload, status: "pending" }).eq("id", currentPending.id);
       
-      await sendTelegramMessage(chat_id, `Entendido, sección ${capitalize(sec)}. ¿Desea guardarlo ahora? Respondé CREAR o CANCELAR.`);
+      const actionType = currentPending.action_type;
+      const updatedPayload = { ...currentPending.payload, section_id: sec };
+      
+      const fakeClassData = { title: updatedPayload.title, section: sec, isoDateOnly: updatedPayload.date };
+      if (await checkDuplicates(actionType, fakeClassData)) {
+        let msg = "Señor, ya existe algo parecido, así que no lo dupliqué.";
+        if (actionType === "create_note") msg = "Señor, ya existe una nota parecida, así que no la dupliqué.";
+        await sendTelegramMessage(chat_id, msg);
+        await supabase.from("telegram_pending_actions").update({ status: "cancelled", cancelled_at: new Date().toISOString() }).eq("id", currentPending.id);
+        return new Response("OK", { status: 200 });
+      }
+
+      let err = null;
+      if (actionType === "create_task") err = (await supabase.from("tasks").insert(updatedPayload)).error;
+      else if (actionType === "create_meeting") err = (await supabase.from("meetings").insert(updatedPayload)).error;
+      else if (actionType === "create_note") err = (await supabase.from("notes").insert(updatedPayload)).error;
+
+      if (err) {
+        await supabase.from("telegram_pending_actions").update({ payload: updatedPayload, status: "pending" }).eq("id", currentPending.id);
+        await sendTelegramMessage(chat_id, "Señor, entendí el pedido, pero no pude guardarlo por un problema interno. Lo revisaré en el panel.");
+      } else {
+        await supabase.from("telegram_pending_actions").update({ payload: updatedPayload, status: "confirmed", confirmed_at: new Date().toISOString() }).eq("id", currentPending.id);
+        const originalText = updatedPayload.description || updatedPayload.content || "";
+        const cData = extractDateTime(originalText);
+        await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, updatedPayload, cData));
+      }
       return new Response("OK", { status: 200 });
     }
 
