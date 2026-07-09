@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { Bell, CalendarDays, CheckSquare, Home, Menu } from 'lucide-react';
+import { Bell, CalendarDays, CheckSquare, Home, Menu, MessageSquare } from 'lucide-react';
 
 const items = [
   ['/dashboard', Home, 'Inicio'],
   ['/tasks', CheckSquare, 'Tareas'],
   ['/agenda', CalendarDays, 'Agenda'],
   ['/alerts', Bell, 'Alertas'],
+  ['/telegram', MessageSquare, 'Telegram'],
   ['/sections', Menu, 'Más'],
 ] as const;
 
