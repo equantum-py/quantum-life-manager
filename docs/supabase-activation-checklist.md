@@ -22,6 +22,9 @@ Este documento detalla el procedimiento paso a paso para pasar la aplicación Qu
    - `derlis@quantum.local`
    - `daniel@quantum.local`
    - `gabriela@quantum.local`
+3. **Importante sobre confirmación de email**: Como estos son emails `.local` ficticios para pruebas internas, no podrán recibir correos de validación.
+   - O bien **desactiva temporalmente** la opción "Confirm email" en **Authentication -> Providers -> Email** antes de crearlos.
+   - O, tras crearlos, asegúrate de marcarlos manualmente como "confirmados" si la interfaz lo requiere para que puedan iniciar sesión.
 
 ## E. Copiar UUIDs de auth.users
 1. En la lista de usuarios, copia el `User UID` de cada uno.
@@ -42,23 +45,27 @@ Este documento detalla el procedimiento paso a paso para pasar la aplicación Qu
    - Gabriela: Solo `familia`.
 
 ## H. Configurar variables locales
-En la raíz de tu proyecto, edita el archivo `.env` o `.env.local`:
+En la raíz de tu proyecto, crea o edita el archivo **`.env.local`** (no usar `.env` para evitar subir variables sensibles por error):
 ```env
 VITE_DATA_MODE=supabase
 VITE_SUPABASE_URL=tu_url_de_supabase
 VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase
 ```
 
-## I. Probar login Supabase
+## I. Probar login Supabase Local (Obligatorio)
+Antes de activar nada en producción (Vercel), debes probar la integración de forma estricta en local:
 1. Levanta tu servidor local (`npm run dev`).
 2. Entra a `/login`.
-3. Inicia sesión con `derlis@quantum.local` y la contraseña.
-4. Deberías ingresar al Dashboard sin errores.
+3. Inicia sesión con `derlis@quantum.local` y valida el acceso total.
+4. Inicia sesión con `daniel@quantum.local` y valida que solo ve `eQuantum`.
+5. Inicia sesión con `gabriela@quantum.local` y valida que solo ve `Familia`.
 
-## J. Validar permisos
-1. Usa el archivo `supabase/validation-queries.sql` en el SQL Editor de Supabase para confirmar que las tablas están pobladas y las políticas RLS están actuando.
-2. Inicia sesión como Daniel en la app y valida que solo ves "eQuantum".
-3. Inicia sesión como Gabriela en la app y valida que solo ves "Familia".
+## J. Configurar variables en Vercel (Producción)
+**Una vez completadas todas las pruebas del paso anterior con éxito:**
+1. Ingresa a tu panel de Vercel y selecciona tu proyecto.
+2. Ve a **Settings -> Environment Variables**.
+3. Añade `VITE_DATA_MODE=supabase`, `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+4. Guarda y haz un **Redeploy**. Entra a tu URL pública y valida que todo opera correctamente.
 
 ## K. Volver a mock si algo falla
 Si ocurre cualquier error crítico en producción o durante las pruebas:

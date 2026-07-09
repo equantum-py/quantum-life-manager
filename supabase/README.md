@@ -17,7 +17,10 @@ Crea los tres usuarios principales:
 2. `daniel@quantum.local`
 3. `gabriela@quantum.local`
 
-(Usa `123456` u otra contraseña segura, pero asegúrate de actualizar tu `.env` o conocerla).
+> [!WARNING]
+> Como estos son correos de prueba `.local`, asegúrate de **desactivar la confirmación de email** temporalmente en Supabase (Authentication -> Providers -> Email), o marca los usuarios como confirmados manualmente en el panel.
+
+(Usa `123456` u otra contraseña segura).
 
 ### 2. Copiar los UUIDs
 Al crear cada usuario, Supabase les asignará un UUID único (ej: `d1c9d...`). Cópialos.
@@ -37,9 +40,9 @@ Recuerda que Derlis (admin) no necesita estar en `section_members` para ver todo
 - Derlis (UUID): puedes insertarle `equantum`, `familia`, `iglesia`, `inverfin`, `idear`.
 
 ### 5. Validación
-Una vez que las tablas tengan estos datos, puedes cambiar en tu archivo `.env`:
+Una vez que las tablas tengan estos datos, crea tu archivo `.env.local` (es más seguro que usar el `.env` estándar):
 ```env
 VITE_DATA_MODE=supabase
 ```
 La aplicación intentará loguearse contra el servidor real, descargará el perfil y cargará todo tu Dashboard desde PostgreSQL.
-Mantenlo en modo `mock` hasta que termines estas pruebas.
+Asegúrate de validar la funcionalidad en **local** para los 3 usuarios antes de mover estas variables al panel de Vercel.
