@@ -1,22 +1,31 @@
 import { Bell, LogOut, Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { prettyDate } from '../../utils/dates';
 
 export function Header() {
   const user = authService.current();
+  const location = useLocation();
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
 
   return (
     <header className="sticky top-0 z-30 app-glass border-none px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[var(--qlm-shadow-soft)] md:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[13px] font-medium capitalize tracking-wide text-slate-500 md:text-sm">
-            {prettyDate(new Date())}
-          </p>
-
-          <h1 className="truncate text-[22px] font-bold leading-tight tracking-tight text-slate-900 md:text-3xl">
-            Hola, {user?.name.split(' ')[0]}
-          </h1>
+        <div className="min-w-0 flex-1">
+          {!isDashboard ? (
+            <>
+              <p className="text-[13px] font-medium capitalize tracking-wide text-slate-500 md:text-sm">
+                {prettyDate(new Date())}
+              </p>
+              <h1 className="truncate text-[22px] font-bold leading-tight tracking-tight text-slate-900 md:text-3xl">
+                Hola, {user?.name.split(' ')[0]}
+              </h1>
+            </>
+          ) : (
+            <div className="flex h-10 items-center">
+              <span className="text-[18px] font-black tracking-tight text-[var(--qlm-primary)]">Quantum</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
