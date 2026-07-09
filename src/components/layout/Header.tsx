@@ -50,7 +50,7 @@ export function Header() {
             className="hidden h-11 w-11 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm md:grid"
             onClick={async () => {
               await authService.logout();
-              location.href = '/login';
+              window.location.href = '/login';
             }}
             aria-label="Cerrar sesión"
           >
