@@ -62,7 +62,19 @@ function detectIntent(text: string) {
   if (validSections.includes(command)) return "supply_section";
 
   if (lowerText.includes("reunión") || lowerText.includes("reunion") || lowerText.includes("agendar") || lowerText.includes("encuentro") || lowerText.includes("cita")) return "create_meeting";
-  if (lowerText.includes("nota") || lowerText.includes("idea") || lowerText.includes("anotar") || lowerText.includes("apuntar") || lowerText.includes("guardar idea")) return "create_note";
+  if (
+    lowerText.includes("nota") ||
+    lowerText.includes("idea") ||
+    lowerText.includes("anota") ||
+    lowerText.includes("anotá") ||
+    lowerText.includes("anotame") ||
+    lowerText.includes("anótame") ||
+    lowerText.includes("anotar") ||
+    lowerText.includes("apuntar") ||
+    lowerText.includes("guarda nota") ||
+    lowerText.includes("guardar nota") ||
+    lowerText.includes("guardar idea")
+  ) return "create_note";
   if (lowerText.includes("recordar") || lowerText.includes("recordarme")) return "create_reminder";
   
   return "create_task";
@@ -129,7 +141,7 @@ function cleanTitle(text: string, intent: string) {
   
   if (intent === 'create_note') {
     t = t.replace(/^(equantum|eQuantum|familia|iglesia|inverfin|idear)\s+/i, "");
-    t = t.replace(/\b(anota|anotar|nota:|nota|idea|apuntar|guardar idea)\b/ig, "");
+    t = t.replace(/\b(anotame|anótame|anota|anotá|anotar|nota:|nota|idea|apuntar|guarda nota|guardar nota|guardar idea)\b/ig, "");
   } else if (intent === 'create_meeting') {
     t = t.replace(/^(equantum|eQuantum|familia|iglesia|inverfin|idear)\s+/i, "");
     t = t.replace(/\b(mañana|hoy|tengo|una|reunión|reunion|agenda|agendar|cita|encuentro|en inverfin|inverfin)\b/ig, "");
