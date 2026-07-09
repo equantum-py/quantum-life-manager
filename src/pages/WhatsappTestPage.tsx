@@ -154,9 +154,6 @@ export function WhatsappTestPage() {
           {isProcessing ? 'Clasificando...' : 'Clasificar Mensaje'}
         </Button>
       </div>
-
-      </div>
-
       {result && (
         <div className="space-y-4 rounded-[28px] border border-blue-200/50 bg-blue-50/70 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-xl">
           <div className="flex items-center justify-between">
