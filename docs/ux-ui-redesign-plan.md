@@ -1,46 +1,43 @@
 # Plan de Rediseño: FASE UX/UI + MOBILE APP EXPERIENCE + PWA FINAL
 
-Este plan detalla las etapas de ejecución para la transformación visual de Quantum Life Manager en una experiencia móvil premium, rápida y cómoda. Durante estas fases **no se alterará la lógica estable, ni el Asistente de Telegram, ni las funciones Edge.**
+Este plan detalla las etapas de ejecución para la transformación visual de Quantum Life Manager para que deje de sentirse como un panel web y pase a ser una **app móvil real, moderna y premium**. Durante estas fases **no se alterará la lógica estable, ni el Asistente de Telegram, ni las funciones Edge.**
+
+## Referencias mobile usadas como inspiración
+- **Aclaración:** No se copian colores. No se copian marcas. Se toma como referencia la experiencia mobile, jerarquía, cards, bottom nav y espaciado de apps tipo ecommerce moderno o iOS.
 
 ## Etapas del Rediseño
 
 ### UX-1: Sistema Visual Base
-El objetivo es establecer los cimientos del nuevo diseño antes de tocar cualquier componente de lógica compleja.
-- **Colores:** Definir una paleta de colores sofisticada (fondos, primarios, acentos y textos) que transmita alta gama.
-- **Tipografía:** Ajustar pesos, alturas de línea y tamaños para jerarquizar correctamente la lectura en pantallas pequeñas.
-- **Formas y Sombras:** Estandarizar bordes amplios (`radius`), sombras modernas y efectos sutiles como glassmorphism.
-- **Componentes Atómicos:** Refactorizar visualmente botones, inputs, badges y tarjetas base sin romper sus `props` u `onClick`.
+El objetivo es establecer los cimientos (estilo iOS/PWA) antes de modificar vistas complejas.
+- **Estilo Visual:** Mantener paleta Quantum (azul principal, celeste acento, fondo claro, cards blancas, sombras suaves, bordes redondeados y glassmorphism suave).
+- **Tipografía y Jerarquía:** Títulos grandes, mucho espacio blanco (aire visual), y jerarquía visual fuerte.
+- **Formas y Componentes:** Bordes muy redondeados (border-radius alto), inputs grandes y cómodos, botones anchos, evitar botones muy chicos. Implementar filtros horizontales tipo píldoras.
 
 ### UX-2: Mobile App Layout
-Reestructurar la envoltura principal de la aplicación (`AppLayout`, `Header`, `MobileBottomNav`) para garantizar comportamiento nativo.
-- **Safe Areas:** Implementar paddings que respeten el notch y las barras de navegación de iOS/Android de forma perfecta.
-- **Navegación Inferior:** Mejorar los iconos, añadir estados activos vibrantes y un diseño flotante o anclado sofisticado.
-- **Header Mobile:** Rediseñar la barra superior para que sea minimalista.
-- **Layout Standalone:** Configurar contenedores para evitar el overscroll elástico indeseado del navegador y garantizar scroll interno.
+Reestructurar la envoltura de la aplicación para garantizar comportamiento nativo.
+- **Navegación Inferior (Mobile):** Fija tipo app, iconos grandes, labels cortos, estado activo muy claro, fondo glass/blur suave, safe area bottom.
+- **General Layout:** En desktop puede seguir existiendo el sidebar, pero en móvil debe ocultarse y priorizar el bottom nav.
+- **Padding y Estructura:** El contenido debe tener padding cómodo. No usar cards angostas como panel, usar max-width mobile cuando corresponda. Evitar que parezca una web comprimida.
 
-### UX-3: Dashboard Premium
-Transformar la página de inicio en un centro de comando verdadero.
-- **Resumen Diario (Day-at-a-glance):** Diseño enfocado en "lo que necesitas saber hoy" de un vistazo.
-- **Accesos Rápidos:** Accesos visualmente atractivos para crear o navegar.
-- **Próximas Tareas y Reuniones:** Presentación en formato horizontal (scrollable) o widgets que consuman poco espacio vertical pero aporten valor inmediato.
-- **Alertas:** Notificaciones y alertas más integradas al sistema visual.
+### UX-3: Login y Dashboard Premium
+- **Login Mobile:** Logo centrado arriba, título claro ("Bienvenido a Quantum"), inputs grandes redondeados, botón principal ancho, link secundario simple, mucho aire. Sin sidebar ni dashboard. Diseño pensado para instalar.
+- **Dashboard Mobile:** Título grande arriba ("Hola, Derlis"), subtítulo corto (fecha/resumen del día). Cards grandes tipo módulos (Hoy, Tareas, Agenda, Telegram, Secciones) con accesos rápidos redondeados. Menos tablas, más cards.
 
 ### UX-4: Tareas, Agenda y Notas
-Rediseñar las vistas de lista y creación de contenido.
-- **Tarjetas Modernas (Cards):** Cada tarea/reunión/nota debe sentirse como una entidad manipulable, con jerarquía visual (prioridades, colores de sección).
-- **Filtros Claros:** Implementar chips de filtrado rápidos (scroll horizontal) en lugar de combos aburridos.
-- **Acciones Rápidas:** Botones claros para cambiar de estado (completar, reprogramar) con hit-areas aptas para dedos.
-- **Estados Visuales:** "Empty states" (pantallas vacías) y "Loading states" (esqueletos) bonitos y acogedores.
+Rediseñar las listas para que no sean tablas admin.
+- **Tareas:** Filtros horizontales tipo píldoras. Cards grandes (sección, título, fecha/hora, prioridad, acción principal). Acciones rápidas visibles. Estados claros pero limpios.
+- **Agenda:** Timeline o cards grandes por evento. Fecha/hora visible, título natural, badge pequeño de tipo "Reunión". Border radius amplio y mejor separación entre eventos.
+- **Notas:** Buscador tipo píldora arriba, filtro por sección, cards simples y limpias (título fuerte, contenido secundario, botones discretos).
 
 ### UX-5: Telegram Panel
-Refinar el panel de auditoría (exclusivo admin).
-- **Auditoría Visual:** Reorganizar la tabla o lista de eventos para que se lea mejor.
-- **Logs Claros:** Diferenciar entre mensajes del usuario, respuestas de IA (mock) y clasificaciones.
-- **Acciones Pendientes:** Tarjetas distintivas para ver qué está esperando confirmación o sección.
+Refinar el panel de auditoría para uso tipo app.
+- **Auditoría Visual:** No hacerlo tipo tabla admin. Usar cards de auditoría.
+- **Resumen:** Resumen superior con métricas.
+- **Filtros y Logs:** Filtros tipo píldora y logs presentados como cards compactas.
+- **Acciones:** Acciones pendientes/confirmadas muy visuales.
 
 ### UX-6: PWA Final
 Cerrar la brecha tecnológica para ser una App Instalable completa.
-- **Iconos Reales:** Generar y asociar todos los tamaños de iconos (Apple Touch Icon, Android).
-- **Splash Screen:** Asegurar un arranque nativo (pantalla de carga de SO).
-- **App Install:** Habilitar el prompt de instalación si aplica.
-- **Manifest Completo:** Refinar colores, temas y configuraciones PWA finales.
+- **Iconos Reales:** Generar y asociar todos los tamaños de iconos.
+- **Splash Screen y App Install:** Arranque nativo y prompt de instalación.
+- **Manifest Completo:** Refinar theme-color y configuración standalone.
