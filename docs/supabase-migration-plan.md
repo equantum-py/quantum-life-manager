@@ -84,8 +84,12 @@ Si `VITE_DATA_MODE=supabase` está activo pero la aplicación detecta que faltan
   - Ambas pantallas implementan manejo de estado asincrónico real (`loading`, `error`) preparándose para la latencia que traerá la nube.
   - El modo de repliegue (*fallback*) `VITE_DATA_MODE=mock` se mantiene intacto, persistiendo todo el uso diario en `localStorage`.
   - **Pendientes de migración**: Aún falta refactorizar los Proyectos (`ProjectsPage`), las Secciones estáticas, el Dashboard principal y, finalmente, reemplazar el sistema de autenticación local por Supabase Auth.
-- **Fase 2.7**: Migrar Proyectos.
-- **Fase 2.7**: Migrar Proyectos.
+- **Fase 2.6**: Migración de Proyectos, Secciones y Dashboard al Repository Layer.
+  - Se completó la migración de todas las pantallas dependientes de colecciones locales, incluyendo `SectionsPage`, `SectionDetailPage` y `DashboardPage`.
+  - El Dashboard ahora utiliza un `Promise.all` para cargar de manera eficiente todas las entidades necesarias simultáneamente desde la nueva capa de repositorios.
+  - Con esto, toda la lógica de negocio asíncrona de datos está lista. La validación en modo mock asegura que el `localStorage` siga persistiendo la sesión con inmediatez.
+  - La validación en modo Supabase funcionará automáticamente gracias al enrutamiento del factory, pero requerirá la configuración de variables de entorno y Supabase Auth.
+  - **Pendiente único**: Configurar Supabase Auth y reemplazar el mock de `authService`.
 - **Fase 2.8**: Conectar la lógica del simulador WhatsApp (`/whatsapp-test`) para que inserte en las tablas reales de `ai_classifications` en lugar de sólo imprimir en pantalla.
 
 ## 11. Riesgos y Mitigaciones

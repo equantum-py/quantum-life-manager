@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarPlus, FileText, PlusCircle } from 'lucide-react';
 import { AlertCard } from '../components/cards/AlertCard';
@@ -5,35 +6,72 @@ import { MeetingCard } from '../components/cards/MeetingCard';
 import { SectionCard } from '../components/cards/SectionCard';
 import { StatCard } from '../components/cards/StatCard';
 import { TaskCard } from '../components/cards/TaskCard';
-import { MobileStatScroller } from '../components/dashboard/MobileStatScroller';
 import { PriorityCard } from '../components/dashboard/PriorityCard';
 import { QuickActionButton } from '../components/dashboard/QuickActionButton';
-import { mockMeetings } from '../data/mockMeetings';
-import { mockProjects } from '../data/mockProjects';
-import { mockSections } from '../data/mockSections';
-import { mockTasks } from '../data/mockTasks';
 import { authService } from '../services/authService';
+import {
+  sectionRepository,
+  taskRepository,
+  meetingRepository,
+  projectRepository,
+} from '../services/repositories';
 import { buildAlerts } from '../utils/alerts';
 import { isPast, isToday, prettyDate, todayISO } from '../utils/dates';
+import { Section, Task, Meeting, Project } from '../types';
 
 export function DashboardPage() {
   const user = authService.current()!;
 
-  const sections = mockSections.filter((section) =>
-    user.sections.includes(section.id)
-  );
+  const [sections, setSections] = useState<Section[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const tasks = mockTasks.filter((task) =>
-    user.sections.includes(task.sectionId)
-  );
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [allSections, allTasks, allMeetings, allProjects] = await Promise.all([
+        sectionRepository.listSections(),
+        taskRepository.listTasks(),
+        meetingRepository.listMeetings(),
+        projectRepository.listProjects(),
+      ]);
 
-  const meetings = mockMeetings.filter((meeting) =>
-    user.sections.includes(meeting.sectionId)
-  );
+      setSections(allSections.filter((s) => user.sections.includes(s.id)));
+      setTasks(allTasks.filter((t) => user.sections.includes(t.sectionId)));
+      setMeetings(allMeetings.filter((m) => user.sections.includes(m.sectionId)));
+      setProjects(allProjects.filter(() => user.sections.includes('equantum')));
 
-  const projects = mockProjects.filter(() =>
-    user.sections.includes('equantum')
-  );
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar el dashboard');
+    } finally {
+      setLoading(false);
+    }
+  }, [user.sections]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-sm font-semibold text-slate-400">Cargando tu panel...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-600">
+        {error}
+      </div>
+    );
+  }
 
   const alerts = buildAlerts(tasks, meetings, projects);
 
@@ -58,7 +96,6 @@ export function DashboardPage() {
       Media: 2,
       Baja: 3,
     } as const;
-
     return order[a.priority] - order[b.priority];
   })[0];
 
@@ -114,12 +151,12 @@ function MobileDashboard({
   stats,
 }: {
   userName: string;
-  sections: typeof mockSections;
-  todayTasks: typeof mockTasks;
-  overdueTasks: typeof mockTasks;
-  nextMeetings: typeof mockMeetings;
-  priorityTask?: (typeof mockTasks)[number];
-  mainAlert?: ReturnType<typeof buildAlerts>[number];
+  sections: Section[];
+  todayTasks: Task[];
+  overdueTasks: Task[];
+  nextMeetings: Meeting[];
+  priorityTask?: Task;
+  mainAlert?: any;
   nextMeetingTitle: string;
   stats: { label: string; value: number | string; tone: string }[];
 }) {
@@ -250,7 +287,6 @@ function MobileDashboard({
           <AlertCard alert={mainAlert} />
         </section>
       )}
-
     </div>
   );
 }
@@ -262,11 +298,11 @@ function DesktopDashboard({
   projects,
   alerts,
 }: {
-  sections: typeof mockSections;
-  tasks: typeof mockTasks;
-  meetings: typeof mockMeetings;
-  projects: typeof mockProjects;
-  alerts: ReturnType<typeof buildAlerts>;
+  sections: Section[];
+  tasks: Task[];
+  meetings: Meeting[];
+  projects: Project[];
+  alerts: any[];
 }) {
   return (
     <div className="hidden space-y-5 md:block">
