@@ -3,9 +3,7 @@ import { Button } from '../components/ui/Button';
 import { Textarea } from '../components/ui/Textarea';
 import { ProcessedMessageResult, whatsappIngestionService } from '../services/whatsappIngestionService';
 import { mockIncomingMessages } from '../data/mockWhatsappMessages';
-import { taskRepository } from '../services/repositories/taskRepository';
-import { noteRepository } from '../services/repositories/noteRepository';
-import { meetingRepository } from '../services/repositories/meetingRepository';
+import { taskRepository, noteRepository, meetingRepository } from '../services/repositories';
 import { SectionId, Priority } from '../types';
 
 export function WhatsappTestPage() {
@@ -228,7 +226,7 @@ export function WhatsappTestPage() {
               </Button>
             )}
 
-            <Button variant="outline" onClick={() => setResult(null)} disabled={isProcessing}>
+            <Button className="bg-slate-100 text-slate-700 hover:bg-slate-200" onClick={() => setResult(null)} disabled={isProcessing}>
               Cancelar
             </Button>
           </div>
