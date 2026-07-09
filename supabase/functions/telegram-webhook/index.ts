@@ -7,39 +7,42 @@ const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") || "";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-function getSafeIsoDate(label: string) {
+function getSafeIsoDate(label: string, hour: number | null, minute: number | null) {
   const d = new Date();
   const tzOffset = d.getTimezoneOffset() * 60000;
   
-  if (label === 'mañana') {
-    d.setDate(d.getDate() + 1);
-    return new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
+  if (label === 'mañana') d.setDate(d.getDate() + 1);
+  else if (label !== 'hoy') {
+    const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'miercoles', 'sabado'];
+    const dayIdxMap: Record<string, number> = { domingo: 0, lunes: 1, martes: 2, miércoles: 3, miercoles: 3, jueves: 4, viernes: 5, sábado: 6, sabado: 6 };
+    
+    if (days.includes(label)) {
+      const targetDay = dayIdxMap[label];
+      const currentDay = d.getDay();
+      let diff = targetDay - currentDay;
+      if (diff <= 0) diff += 7; // Próximo día
+      d.setDate(d.getDate() + diff);
+    }
+  }
+
+  const localDate = new Date(d.getTime() - tzOffset); // current local date approximation
+  const yyyy = localDate.getUTCFullYear();
+  const mm = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(localDate.getUTCDate()).padStart(2, '0');
+  
+  if (hour !== null) {
+    const hh = String(hour).padStart(2, '0');
+    const min = String(minute || 0).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}:00-04:00`; // Asume zona horaria local -04:00 (ej. PY)
   }
   
-  if (label === 'hoy') {
-    return new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
-  }
-  
-  const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'miercoles', 'sabado'];
-  const dayIdxMap: Record<string, number> = { domingo: 0, lunes: 1, martes: 2, miércoles: 3, miercoles: 3, jueves: 4, viernes: 5, sábado: 6, sabado: 6 };
-  
-  if (days.includes(label)) {
-    const targetDay = dayIdxMap[label];
-    const currentDay = d.getDay();
-    let diff = targetDay - currentDay;
-    if (diff <= 0) diff += 7; // Próximo día
-    d.setDate(d.getDate() + diff);
-    return new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
-  }
-  
-  // Default seguro a hoy
-  return new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function mockClassify(text: string) {
   const lowerText = text.toLowerCase();
   
-  // 1. Detectar Sección (solo si menciona algo clave, si no, null)
+  // 1. Detectar Sección
   let section = null; 
   if (lowerText.includes("familia") || lowerText.includes("casa") || lowerText.includes("esposa")) section = "familia";
   else if (lowerText.includes("iglesia") || lowerText.includes("ministerio")) section = "iglesia";
@@ -55,25 +58,41 @@ function mockClassify(text: string) {
   else if (lowerText.includes("entregar") && section === "idear") itemType = "academic_delivery";
   else if (lowerText.includes("recordar") || lowerText.includes("recordatorio")) itemType = "reminder";
 
-  // 3. Detectar Fecha básica
+  // 3. Detectar Fecha y Hora
   let dateLabel = "hoy";
   const dateRegex = /\b(mañana|hoy|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\b/i;
   const match = lowerText.match(dateRegex);
   if (match) {
     dateLabel = match[1].toLowerCase();
   }
-  const isoDate = getSafeIsoDate(dateLabel);
+
+  let hour = null;
+  let minute = null;
+  let timeLabel = null;
+  const timeRegex = /a las (\d{1,2})(?::(\d{2}))?|(\d{1,2})(?::(\d{2}))?\s*hs/i;
+  const timeMatch = lowerText.match(timeRegex);
+  if (timeMatch) {
+    hour = parseInt(timeMatch[1] || timeMatch[3], 10);
+    minute = parseInt(timeMatch[2] || timeMatch[4] || "0", 10);
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      timeLabel = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    } else {
+      hour = null;
+      minute = null;
+    }
+  }
+
+  const isoDate = getSafeIsoDate(dateLabel, hour, minute);
 
   // 4. Detectar Título Limpio
   let cleanTitle = text;
   // Remover sección al inicio
   cleanTitle = cleanTitle.replace(/^(equantum|eQuantum|familia|iglesia|inverfin|idear)\s+/i, "");
-  // Remover palabras de fecha
-  const dateWords = ["mañana", "hoy", "lunes", "martes", "miércoles", "miercoles", "jueves", "viernes", "sábado", "sabado", "domingo"];
-  dateWords.forEach(w => {
-    const r = new RegExp(`\\b${w}\\b`, "ig");
-    cleanTitle = cleanTitle.replace(r, "");
-  });
+  // Remover palabras de fecha y ruido
+  cleanTitle = cleanTitle.replace(/\b(mañana|hoy|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo|recordar|recordarme|el)\b/ig, "");
+  // Remover hora
+  cleanTitle = cleanTitle.replace(/\ba las \d{1,2}(:\d{2})?\b/ig, "");
+  cleanTitle = cleanTitle.replace(/\b\d{1,2}(:\d{2})?\s*hs\b/ig, "");
   cleanTitle = cleanTitle.replace(/\s+/g, " ").trim();
   if (cleanTitle.length > 0) cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
   if (!cleanTitle) cleanTitle = "Sin título";
@@ -88,6 +107,7 @@ function mockClassify(text: string) {
     itemType,
     title: cleanTitle,
     dateLabel,
+    timeLabel,
     isoDate,
     priority,
     confidence: 0.85
@@ -274,7 +294,11 @@ serve(async (req) => {
       });
 
       // 3. Responder pidiendo confirmación
-      let responseText = `✅ Detecté una tarea.\n\nSección: ${classification.section}\nTítulo: ${classification.title}\nFecha: ${classification.dateLabel}\nPrioridad: ${classification.priority}\n\nRespondé CREAR para guardarla como tarea.\nRespondé CANCELAR para descartarla.`;
+      let responseText = `✅ Detecté una tarea.\n\nSección: ${classification.section}\nTítulo: ${classification.title}\nFecha: ${classification.dateLabel}\n`;
+      if (classification.timeLabel) {
+        responseText += `Hora: ${classification.timeLabel}\n`;
+      }
+      responseText += `Prioridad: ${classification.priority}\n\nRespondé CREAR para guardarla como tarea.\nRespondé CANCELAR para descartarla.`;
       await sendTelegramMessage(chat_id, responseText);
     } else {
       // Si detecta nota o reunión, por ahora solo avisa pero no pide crear
