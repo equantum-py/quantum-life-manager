@@ -5,7 +5,10 @@ Este directorio contiene las migraciones de base de datos, las políticas de seg
 ## Pasos manuales para activar Supabase Auth
 
 Actualmente la app funciona al 100% en modo `mock`, pero tiene inyectado el `supabaseAuthProvider` esperando ser activado cambiando a `VITE_DATA_MODE=supabase`. 
-Antes de hacer ese cambio, debes realizar los siguientes pasos de configuración manual en tu proyecto de Supabase:
+Antes de hacer ese cambio, debes realizar los siguientes pasos de configuración manual en tu proyecto de Supabase.
+
+> [!IMPORTANT]  
+> Para una guía detallada y operativa paso a paso de la puesta en marcha en producción, revisa el [Checklist de Activación](../docs/supabase-activation-checklist.md). También puedes usar las consultas de validación en `validation-queries.sql` y el script de población en `manual-profile-setup.sql`.
 
 ### 1. Crear usuarios en Supabase Auth
 Ve al panel de tu proyecto en Supabase -> **Authentication** -> **Add User**.

@@ -95,7 +95,13 @@ Si `VITE_DATA_MODE=supabase` está activo pero la aplicación detecta que faltan
   - En modo mock, el inicio de sesión y la hidratación de perfiles es instantánea vía localStorage. En modo supabase, interactúa con `supabase.auth.getSession`, recupera los metadatos desde las tablas `profiles` y `section_members`, y soporta de forma asíncrona estados de carga.
   - Para proteger las rutas y mantener la UX estable, `ProtectedRoute.tsx` y `LoginPage.tsx` fueron actualizados para esperar a que `authService.initialize()` concluya antes de intentar renderizar o redirigir.
   - **Pendientes para habilitar Supabase**: Crear manualmente los usuarios en el panel de Supabase Auth, registrar sus UUIDs en la tabla `profiles` e insertar sus roles en `section_members`.
-- **Fase 2.8**: Conectar la lógica del simulador WhatsApp (`/whatsapp-test`) para que inserte en las tablas reales de `ai_classifications` en lugar de sólo imprimir en pantalla.
+- **Fase 2.8**: Validación real de Supabase antes de activar producción.
+  - Se crearon documentos y scripts para ejecutar una prueba en seco en Supabase (`docs/supabase-activation-checklist.md`, `supabase/manual-profile-setup.sql`, `supabase/validation-queries.sql`).
+  - Esta fase garantiza que cuando `VITE_DATA_MODE=supabase` sea activado, las migraciones, políticas de RLS, perfiles y permisos (`section_members`) ya estén completamente operativos.
+
+## 3. Integración de WhatsApp & IA
+
+- **Fase 3.1**: Conectar la lógica del simulador WhatsApp (`/whatsapp-test`) para que inserte en las tablas reales de `ai_classifications` en lugar de sólo imprimir en pantalla.
 
 ## 11. Riesgos y Mitigaciones
 - **Romper permisos (RLS)**: Si el RLS falla, Daniel podría ver datos de Inverfin. *Mitigación: Testear RLS simulando los JWT en el SQL Editor antes de conectar el frontend.*
