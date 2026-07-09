@@ -44,6 +44,14 @@ function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+function capitalizeNames(t: string) {
+  return t.replace(/\bbristol\b/ig, "Bristol")
+          .replace(/\bsony\b/ig, "Sony")
+          .replace(/\bguaramarket\b/ig, "GuaraMarket")
+          .replace(/\bequantum\b/ig, "eQuantum")
+          .replace(/\binverfin\b/ig, "Inverfin");
+}
+
 // ==========================================
 // 2. PARSER & INTENT DETECTION
 // ==========================================
@@ -164,6 +172,12 @@ function cleanTitle(text: string, intent: string) {
       t = capitalize(t.substring(6));
   }
   
+  if (intent === 'create_meeting' && t.toLowerCase().startsWith("con ")) {
+      t = "Reunión " + t;
+  }
+  
+  t = capitalizeNames(t);
+  
   return t || "Sin título";
 }
 
@@ -198,21 +212,33 @@ async function checkDuplicates(actionType: string, classData: any) {
   } else if (actionType === "create_meeting") {
     const { data } = await supabase.from("meetings").select("id").eq("title", classData.title).eq("section_id", classData.section).eq("date", classData.isoDateOnly).limit(1);
     return data && data.length > 0;
+  } else if (actionType === "create_note") {
+    const { data } = await supabase.from("notes").select("id").eq("title", classData.title).eq("section_id", classData.section).limit(1);
+    return data && data.length > 0;
   }
   return false;
 }
 
 function formatNaturalResponse(actionType: string, payload: any, classData: any) {
   const sec = capitalize(payload.section_id);
-  const t = payload.title.toLowerCase().startsWith("reunión") ? payload.title.substring(8).trim() : payload.title;
+  const rawTitle = payload.title;
 
   if (actionType === "create_note") {
-    return `Listo señor, guardé la nota sobre ${t.toLowerCase()} en ${sec}.`;
+    return `Listo señor, guardé la nota sobre ${rawTitle.toLowerCase()} en ${sec}.`;
   }
   if (actionType === "create_meeting") {
     const d = classData.explicitDate;
     const h = classData.timeLabel || "horario a definir";
-    return `Listo señor, agendé la reunión ${t.toLowerCase().includes("con") ? "" : "sobre"} ${t.toLowerCase()} para ${d} a las ${h} en ${sec}.`;
+    let t = rawTitle;
+    if (t.toLowerCase().startsWith("reunión ")) {
+      t = t.substring(8).trim();
+    }
+    if (!t.toLowerCase().startsWith("con ")) {
+      t = "sobre " + t.toLowerCase();
+    } else {
+      t = t.charAt(0).toLowerCase() + t.slice(1);
+    }
+    return `Listo señor, agendé la reunión ${t} para ${d} a las ${h} en ${sec}.`;
   }
   
   // Tasks / Reminders
@@ -357,7 +383,9 @@ serve(async (req) => {
 
     // Anti-dupes
     if (classData.section && await checkDuplicates(actionType, classData)) {
-      await sendTelegramMessage(chat_id, "Señor, ya existe algo parecido, así que no lo dupliqué.");
+      let msg = "Señor, ya existe algo parecido, así que no lo dupliqué.";
+      if (actionType === "create_note") msg = "Señor, ya existe una nota parecida, así que no la dupliqué.";
+      await sendTelegramMessage(chat_id, msg);
       return new Response("OK", { status: 200 });
     }
 
