@@ -1,8 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { LockKeyhole, Sparkles } from 'lucide-react';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { Sparkles } from 'lucide-react';
 import { authService } from '../services/authService';
 
 export function LoginPage() {
@@ -24,8 +22,8 @@ export function LoginPage() {
 
   if (initializing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
-        <p className="text-sm font-semibold text-slate-400">Cargando...</p>
+      <div className="app-shell items-center justify-center">
+        <p className="app-muted font-semibold">Cargando...</p>
       </div>
     );
   }
@@ -45,22 +43,19 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center bg-[#F8FAFC] p-4 md:p-6">
-      <section className="mx-auto w-full max-w-md">
-        <div className="mb-6 rounded-[2rem] bg-slate-950 p-6 text-white shadow-soft md:rounded-[2.5rem]">
-          <div className="grid h-16 w-16 place-items-center rounded-3xl bg-blue-600">
-            <Sparkles size={32} />
+    <main className="app-shell flex-col justify-center p-4 md:p-8">
+      <section className="mx-auto w-full max-w-sm">
+        
+        <div className="mb-10 text-center">
+          <div className="mx-auto mb-6 grid h-[72px] w-[72px] place-items-center rounded-[var(--qlm-radius-xl)] bg-[var(--qlm-primary)] text-white shadow-[var(--qlm-shadow-soft)]">
+            <Sparkles size={36} strokeWidth={2.5} />
           </div>
 
-          <p className="mt-8 text-sm font-black uppercase tracking-wide text-blue-200">
-            App privada
-          </p>
-
-          <h1 className="mt-2 text-[32px] font-black leading-none tracking-[-0.05em] md:text-4xl">
-            Quantum Life Manager
+          <h1 className="app-mobile-title mb-3">
+            Bienvenido a Quantum
           </h1>
 
-          <p className="mt-4 text-[16px] leading-relaxed text-slate-300">
+          <p className="app-muted text-[16px] leading-relaxed">
             Tu vida, tareas, agenda y proyectos en una experiencia móvil simple
             y premium.
           </p>
@@ -68,39 +63,23 @@ export function LoginPage() {
 
         <form
           onSubmit={submit}
-          className="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm md:rounded-[2.25rem] md:p-6"
+          className="md:app-card space-y-5"
         >
-          <div className="mb-5 flex items-center gap-4">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-blue-50 text-blue-700">
-              <LockKeyhole size={28} />
-            </span>
-
-            <div>
-              <h2 className="text-[22px] font-black tracking-[-0.03em] text-slate-950">
-                Ingresar
-              </h2>
-
-              <p className="text-[15px] font-semibold text-slate-500">
-                Identificación segura
-              </p>
-            </div>
-          </div>
-
           <div className="space-y-4">
-            <Input
+            <input
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="Email"
-              className="min-h-[56px] text-[16px]"
+              className="app-input"
               disabled={loading}
             />
 
-            <Input
+            <input
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
+              placeholder="Contraseña"
               type="password"
-              className="min-h-[56px] text-[16px]"
+              className="app-input"
               disabled={loading}
             />
 
@@ -110,15 +89,15 @@ export function LoginPage() {
               </p>
             )}
 
-            <Button className="min-h-[56px] w-full text-[18px]" disabled={loading}>
+            <button type="submit" className="app-button-primary w-full text-[17px] mt-2" disabled={loading}>
               {loading ? 'Ingresando...' : 'Entrar'}
-            </Button>
+            </button>
           </div>
 
-          <div className="mt-5 rounded-3xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-600">
+          <div className="mt-8 rounded-[var(--qlm-radius-md)] bg-white/40 p-4 text-sm leading-relaxed text-slate-500 text-center border border-slate-200/50">
             <b>Credenciales (Mock):</b>
             <br />
-            derlis@quantum.local · daniel@quantum.local · gabriela@quantum.local
+            derlis@quantum.local
             <br />
             Password: 123456
           </div>

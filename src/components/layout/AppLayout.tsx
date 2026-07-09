@@ -16,18 +16,18 @@ const links = [
 
 export function AppLayout() {
   return (
-    <div className="min-h-screen">
+    <div className="app-shell flex-col">
       <Header />
 
-      <div className="mx-auto flex h-full max-w-6xl">
+      <div className="app-container flex w-full">
         <aside className="hidden w-64 shrink-0 p-6 md:block">
-          <div className="sticky top-24 rounded-[2rem] border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="sticky top-24 app-glass rounded-[var(--qlm-radius-lg)] p-3 shadow-[var(--qlm-shadow-soft)]">
             {links.map(([to, label]) => (
               <NavLink
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `mb-1 block rounded-2xl px-4 py-3 text-sm font-bold ${
+                  `mb-1 block rounded-[var(--qlm-radius-sm)] px-4 py-3 text-sm font-bold transition-colors ${
                     isActive
                       ? 'bg-blue-600 text-white'
                       : 'text-slate-600 hover:bg-slate-50'
@@ -40,7 +40,7 @@ export function AppLayout() {
           </div>
         </aside>
 
-        <main className="w-full flex-1 px-4 pb-[calc(120px+env(safe-area-inset-bottom))] pt-6 md:px-8 md:pb-12 md:pt-8">
+        <main className="app-page">
           <Outlet />
         </main>
       </div>
