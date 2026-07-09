@@ -49,7 +49,21 @@ function capitalizeNames(t: string) {
           .replace(/\bsony\b/ig, "Sony")
           .replace(/\bguaramarket\b/ig, "GuaraMarket")
           .replace(/\bequantum\b/ig, "eQuantum")
-          .replace(/\binverfin\b/ig, "Inverfin");
+          .replace(/\binverfin\b/ig, "Inverfin")
+          .replace(/\bcorpicia\b/ig, "Corpicia");
+}
+
+function normalizeMeetingTitle(t: string) {
+  let title = t;
+  const lowers = ["con", "la", "de", "del", "el", "para", "en", "las", "los", "un", "una", "y", "o"];
+  
+  title = title.split(" ").map((w, i) => {
+    if (i === 0) return capitalize(w);
+    if (lowers.includes(w.toLowerCase())) return w.toLowerCase();
+    return w;
+  }).join(" ");
+
+  return title;
 }
 
 // ==========================================
@@ -167,13 +181,23 @@ function cleanTitle(text: string, intent: string) {
   t = t.replace(/\s+/g, " ").trim();
   if (t.length > 0) t = capitalize(t);
   
-  // Limpieza final por si quedó un "sobre" inicial de reuniones "reunion sobre..."
+  // Limpieza final por si quedó un "sobre" inicial
   if (t.toLowerCase().startsWith("sobre ")) {
-      t = capitalize(t.substring(6));
+      t = t.substring(6).trim();
+      if (t.length > 0) t = capitalize(t);
   }
   
-  if (intent === 'create_meeting' && t.toLowerCase().startsWith("con ")) {
-      t = "Reunión " + t.charAt(0).toLowerCase() + t.slice(1);
+  if (intent === 'create_meeting') {
+      t = t.replace(/\bcon la gente de\b/ig, "con");
+      t = t.replace(/\bcon los de\b/ig, "con");
+      
+      if (t.toLowerCase().startsWith("con ")) {
+          t = "Reunión " + t.charAt(0).toLowerCase() + t.slice(1);
+      } else if (!t.toLowerCase().startsWith("reunión")) {
+          t = "Reunión sobre " + t.charAt(0).toLowerCase() + t.slice(1);
+      }
+      
+      t = normalizeMeetingTitle(t);
   }
   
   t = capitalizeNames(t);
@@ -232,11 +256,6 @@ function formatNaturalResponse(actionType: string, payload: any, classData: any 
     let t = rawTitle;
     if (t.toLowerCase().startsWith("reunión ")) {
       t = t.substring(8).trim();
-    }
-    if (!t.toLowerCase().startsWith("con ")) {
-      t = "sobre " + t.toLowerCase();
-    } else {
-      t = t.charAt(0).toLowerCase() + t.slice(1);
     }
     return `Listo señor, agendé la reunión ${t} para ${d} a las ${h} en ${sec}.`;
   }
