@@ -5,6 +5,7 @@ import { ProcessedMessageResult, whatsappIngestionService } from '../services/wh
 import { mockIncomingMessages } from '../data/mockWhatsappMessages';
 import { taskRepository, noteRepository, meetingRepository } from '../services/repositories';
 import { SectionId, Priority } from '../types';
+import { safeDateString } from '../utils/dates';
 
 export function WhatsappTestPage() {
   const [inputMessage, setInputMessage] = useState('');
@@ -26,7 +27,7 @@ export function WhatsappTestPage() {
       sectionId: sectionId as SectionId,
       priority: normalizedPriority,
       status: 'Pendiente' as const,
-      dueDate: extractedData.date || new Date().toISOString(),
+      dueDate: safeDateString(extractedData.date),
       assignee: 'Sin asignar'
     };
   };

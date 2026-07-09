@@ -2,8 +2,14 @@ import { Task } from '../../types';
 import { TaskRepository } from './types';
 import { supabase } from '../../lib/supabaseClient';
 import { dataModeService } from '../dataModeService';
+import { safeDateString } from '../../utils/dates';
 
 function normalizeTaskFromSupabase(d: any): Task {
+  const safeDueDate = safeDateString(d.due_date);
+  if (!d.due_date || safeDueDate !== d.due_date) {
+    console.warn('Invalid task date normalized', d);
+  }
+
   return {
     ...d,
     id: d.id || '',
@@ -11,9 +17,9 @@ function normalizeTaskFromSupabase(d: any): Task {
     description: d.description || '',
     sectionId: d.section_id || 'equantum',
     projectId: d.project_id || undefined,
-    dueDate: d.due_date || new Date().toISOString(),
-    createdAt: d.created_at || new Date().toISOString(),
-    updatedAt: d.updated_at || d.created_at || new Date().toISOString(),
+    dueDate: safeDueDate,
+    createdAt: safeDateString(d.created_at),
+    updatedAt: safeDateString(d.updated_at || d.created_at),
     priority: d.priority || 'Media',
     status: d.status || 'Pendiente',
     assignee: d.assignee || 'Sin asignar'
