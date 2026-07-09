@@ -29,7 +29,7 @@ Rediseñar las listas para que no sean tablas admin.
 - **Agenda:** Timeline o cards grandes por evento. Fecha/hora visible, título natural, badge pequeño de tipo "Reunión". Border radius amplio y mejor separación entre eventos.
 - **Notas:** Buscador tipo píldora arriba, filtro por sección, cards simples y limpias (título fuerte, contenido secundario, botones discretos).
 
-### UX-5: Telegram Panel
+### ~~UX-5: Telegram Panel~~ (COMPLETADO)
 Refinar el panel de auditoría para uso tipo app.
 - **Auditoría Visual:** No hacerlo tipo tabla admin. Usar cards de auditoría.
 - **Resumen:** Resumen superior con métricas.
