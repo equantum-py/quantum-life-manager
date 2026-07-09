@@ -1,2 +1,23 @@
-import { mockUsers } from '../data/mockUsers';import { User } from '../types';import { storageService } from './storageService';
-const KEY='qlm_session';export const authService={login(email:string,password:string){const user=mockUsers.find(u=>u.email===email&&u.password===password);if(!user)throw new Error('Credenciales inválidas');const safe={...user,password:''};storageService.set(KEY,safe);return safe as User},logout(){storageService.remove(KEY)},current(){return storageService.get<User|null>(KEY,null)},canAccess(sectionId:string){const u=this.current();return !!u?.sections.includes(sectionId as never)}};
+import { dataModeService } from './dataModeService';
+import { mockAuthProvider } from './auth/mockAuthProvider';
+import { supabaseAuthProvider } from './auth/supabaseAuthProvider';
+import { AuthProvider } from './auth/types';
+
+export const authService: AuthProvider & {
+  canAccess(sectionId: string): boolean;
+} = new Proxy({} as any, {
+  get(_, prop: keyof AuthProvider | 'canAccess') {
+    const provider = dataModeService.isSupabaseMode() 
+      ? supabaseAuthProvider 
+      : mockAuthProvider;
+      
+    if (prop === 'canAccess') {
+      return (sectionId: string) => {
+        const u = provider.current();
+        return !!u?.sections.includes(sectionId as never);
+      };
+    }
+    
+    return provider[prop as keyof AuthProvider];
+  }
+});

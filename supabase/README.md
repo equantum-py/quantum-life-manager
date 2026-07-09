@@ -1,45 +1,42 @@
-# Supabase Local Setup & Migrations
+# Quantum Life Manager - Supabase Backend
 
-Este directorio contiene la arquitectura de la base de datos de Quantum Life Manager para Supabase.
+Este directorio contiene las migraciones de base de datos, las políticas de seguridad (RLS) y la semilla de datos inicial.
 
-## Archivos de Migración
+## Pasos manuales para activar Supabase Auth
 
-1. **`migrations/0001_initial_schema.sql`**
-   - Crea las tablas fundamentales (`profiles`, `sections`, `section_members`, `tasks`, `meetings`, `notes`, `projects`, `whatsapp_logs`, `ai_classifications`).
-   - Define Enums de PostgreSQL para proteger la integridad de los datos.
-   - Crea las llaves foráneas (`ON DELETE CASCADE`) y los Triggers para automatizar `updated_at`.
+Actualmente la app funciona al 100% en modo `mock`, pero tiene inyectado el `supabaseAuthProvider` esperando ser activado cambiando a `VITE_DATA_MODE=supabase`. 
+Antes de hacer ese cambio, debes realizar los siguientes pasos de configuración manual en tu proyecto de Supabase:
 
-2. **`migrations/0002_rls_policies.sql`**
-   - Habilita RLS (Row Level Security).
-   - Crea políticas de seguridad críticas para el manejo multitenant (por áreas):
-     - Administradores (Derlis) tienen acceso omnipotente.
-     - Colaboradores (Daniel) están restringidos matemáticamente a `eQuantum`.
-     - Familiares (Gabriela) restringidas a `Familia`.
+### 1. Crear usuarios en Supabase Auth
+Ve al panel de tu proyecto en Supabase -> **Authentication** -> **Add User**.
+Crea los tres usuarios principales:
+1. `derlis@quantum.local`
+2. `daniel@quantum.local`
+3. `gabriela@quantum.local`
 
-3. **`seed.sql`**
-   - Script de población inicial.
-   - Inserta las 5 áreas vitales fundamentales que usa la app.
-   - Inserta los proyectos *mock* estáticos de eQuantum para empezar a probar.
+(Usa `123456` u otra contraseña segura, pero asegúrate de actualizar tu `.env` o conocerla).
 
-## Orden de Ejecución
-Si estás levantando la base de datos manualmente en el SQL Editor de Supabase (y no usando el CLI), **debes ejecutar los scripts estrictamente en este orden**:
-1. `0001_initial_schema.sql`
-2. `0002_rls_policies.sql`
-3. `seed.sql`
+### 2. Copiar los UUIDs
+Al crear cada usuario, Supabase les asignará un UUID único (ej: `d1c9d...`). Cópialos.
 
-## Usuarios y Autenticación (Supabase Auth)
-Los perfiles de usuario (`public.profiles`) tienen una llave foránea restrictiva hacia `auth.users` (el esquema cerrado de Supabase). 
-Por lo tanto, el `seed.sql` **no** crea los usuarios automáticamente. 
-Debes crearlos manualmente en el Dashboard de Supabase y luego enlazar sus UUIDs. Las instrucciones precisas (con código SQL preparado) están al final del propio archivo `seed.sql`.
+### 3. Insertar perfiles (`profiles`)
+Ve a **Table Editor** -> `profiles`, e inserta una fila por cada UUID:
+- Derlis: `{ id: "UUID", name: "Derlis Aguilera", role: "admin" }`
+- Daniel: `{ id: "UUID", name: "Daniel Sosa", role: "collaborator" }`
+- Gabriela: `{ id: "UUID", name: "Gabriela", role: "family" }`
 
-## Estrategia VITE_DATA_MODE
-La app soporta dos modos que conviven en paz:
-- `VITE_DATA_MODE=mock`: Lee todo desde `localStorage` (sin base de datos, perfecto para UI/UX y demostraciones rápidas).
-- `VITE_DATA_MODE=supabase`: La app intentará usar `VITE_SUPABASE_URL` y la Anon Key para hacer consultas REST/Realtime directamente a PostgreSQL.
+### 4. Insertar permisos (`section_members`)
+Ve a **Table Editor** -> `section_members`. 
+Recuerda que Derlis (admin) no necesita estar en `section_members` para ver todo, ya que las políticas RLS le dan acceso total. Pero por seguridad de la UI, puedes insertarle todos los accesos.
 
-Las políticas **RLS** descritas arriba garantizan que cuando uses el modo `supabase`, un cliente malicioso con la *Anon Key* no pueda ver los datos personales de la familia, a menos que esté logueado y tenga permisos en `section_members`.
+- Daniel (UUID): inserta una fila vinculándolo al `section_id` = `equantum`.
+- Gabriela (UUID): inserta una fila vinculándola al `section_id` = `familia`.
+- Derlis (UUID): puedes insertarle `equantum`, `familia`, `iglesia`, `inverfin`, `idear`.
 
-## Pendiente antes de Producción
-1. Refactorizar los servicios (`src/services/*`) para que obedezcan al feature toggle y utilicen `@supabase/supabase-js`.
-2. Habilitar y probar Supabase Auth con JWTs reales.
-3. Preparar la Edge Function para el webhook de WhatsApp Cloud API.
+### 5. Validación
+Una vez que las tablas tengan estos datos, puedes cambiar en tu archivo `.env`:
+```env
+VITE_DATA_MODE=supabase
+```
+La aplicación intentará loguearse contra el servidor real, descargará el perfil y cargará todo tu Dashboard desde PostgreSQL.
+Mantenlo en modo `mock` hasta que termines estas pruebas.

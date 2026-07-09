@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { LockKeyhole, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -9,19 +9,38 @@ export function LoginPage() {
   const [email, setEmail] = useState('derlis@quantum.local');
   const [password, setPassword] = useState('123456');
   const [error, setError] = useState('');
+  const [initializing, setInitializing] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  if (authService.current()) {
-    return <Navigate to="/dashboard" />;
+  useEffect(() => {
+    authService.initialize().then((u) => {
+      if (u) {
+        location.href = '/dashboard';
+      } else {
+        setInitializing(false);
+      }
+    });
+  }, []);
+
+  if (initializing) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
+        <p className="text-sm font-semibold text-slate-400">Cargando...</p>
+      </div>
+    );
   }
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-
+    setLoading(true);
+    setError('');
+    
     try {
-      authService.login(email, password);
+      await authService.login(email, password);
       location.href = '/dashboard';
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      setError(err.message || 'Ocurrió un error');
+      setLoading(false);
     }
   }
 
@@ -62,7 +81,7 @@ export function LoginPage() {
               </h2>
 
               <p className="text-[15px] font-semibold text-slate-500">
-                Modo mock/localStorage
+                Identificación segura
               </p>
             </div>
           </div>
@@ -73,6 +92,7 @@ export function LoginPage() {
               onChange={(event) => setEmail(event.target.value)}
               placeholder="Email"
               className="min-h-[56px] text-[16px]"
+              disabled={loading}
             />
 
             <Input
@@ -81,6 +101,7 @@ export function LoginPage() {
               placeholder="Password"
               type="password"
               className="min-h-[56px] text-[16px]"
+              disabled={loading}
             />
 
             {error && (
@@ -89,14 +110,15 @@ export function LoginPage() {
               </p>
             )}
 
-            <Button className="min-h-[56px] w-full text-[18px]">Entrar</Button>
+            <Button className="min-h-[56px] w-full text-[18px]" disabled={loading}>
+              {loading ? 'Ingresando...' : 'Entrar'}
+            </Button>
           </div>
 
           <div className="mt-5 rounded-3xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-600">
-            <b>Credenciales:</b>
+            <b>Credenciales (Mock):</b>
             <br />
-            derlis@quantum.local · daniel@quantum.local ·
-            gabriela@quantum.local
+            derlis@quantum.local · daniel@quantum.local · gabriela@quantum.local
             <br />
             Password: 123456
           </div>
