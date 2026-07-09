@@ -7,9 +7,21 @@ const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") || "";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+function isBotGeneratedMessage(text: string): boolean {
+  const lowerText = text.toLowerCase();
+  return lowerText.includes("✅ detecté una tarea") ||
+         lowerText.includes("✅ mensaje clasificado") ||
+         lowerText.includes("✅ tarea creada correctamente") ||
+         lowerText.includes("respondé crear") ||
+         lowerText.includes("respondé cancelar") ||
+         lowerText.includes("guardado en quantum life manager") ||
+         lowerText.includes("sección:") ||
+         lowerText.includes("título:") ||
+         lowerText.includes("prioridad:");
+}
+
 function getSafeIsoDate(label: string, hour: number | null, minute: number | null) {
   const d = new Date();
-  const tzOffset = d.getTimezoneOffset() * 60000;
   
   if (label === 'mañana') d.setDate(d.getDate() + 1);
   else if (label !== 'hoy') {
@@ -25,18 +37,9 @@ function getSafeIsoDate(label: string, hour: number | null, minute: number | nul
     }
   }
 
-  const localDate = new Date(d.getTime() - tzOffset); // current local date approximation
-  const yyyy = localDate.getUTCFullYear();
-  const mm = String(localDate.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(localDate.getUTCDate()).padStart(2, '0');
-  
-  if (hour !== null) {
-    const hh = String(hour).padStart(2, '0');
-    const min = String(minute || 0).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}T${hh}:${min}:00-04:00`; // Asume zona horaria local -04:00 (ej. PY)
-  }
-  
-  return `${yyyy}-${mm}-${dd}`;
+  // Generar ISO sin restar timezone manualmente para evitar descuadres de día en UTC
+  d.setHours(hour ?? 0, minute ?? 0, 0, 0);
+  return d.toISOString();
 }
 
 function mockClassify(text: string) {
@@ -93,6 +96,11 @@ function mockClassify(text: string) {
   // Remover hora
   cleanTitle = cleanTitle.replace(/\ba las \d{1,2}(:\d{2})?\b/ig, "");
   cleanTitle = cleanTitle.replace(/\b\d{1,2}(:\d{2})?\s*hs\b/ig, "");
+  
+  // Remover ruido extra generado por reenvíos si pasara
+  cleanTitle = cleanTitle.replace(/✅/g, "");
+  cleanTitle = cleanTitle.replace(/\b(Detecté una tarea|Mensaje clasificado|Sección:|Título:|Fecha:|Hora:|Prioridad:|Respondé CREAR|Respondé CANCELAR|Guardado en Quantum Life Manager)\b/ig, "");
+
   cleanTitle = cleanTitle.replace(/\s+/g, " ").trim();
   if (cleanTitle.length > 0) cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
   if (!cleanTitle) cleanTitle = "Sin título";
@@ -145,6 +153,12 @@ serve(async (req) => {
     const text = message.text;
 
     const commandText = text.trim().toUpperCase();
+
+    // Defensa Anti-Bot: Ignorar reenvíos o copias del bot
+    if (commandText !== "CREAR" && commandText !== "CANCELAR" && isBotGeneratedMessage(text)) {
+      await sendTelegramMessage(chat_id, "⚠️ Ese mensaje parece una respuesta del bot. Enviá una tarea nueva, por ejemplo: Familia leer la biblia a las 19.");
+      return new Response("OK", { status: 200 });
+    }
 
     // -----------------------------------------------------
     // FLUJO 1: CONFIRMACIÓN DE ACCIONES PENDIENTES
@@ -201,6 +215,18 @@ serve(async (req) => {
     // FLUJO 2: CLASIFICACIÓN DE MENSAJES NUEVOS
     // -----------------------------------------------------
     const classification = mockClassify(text);
+    
+    // Validación de seguridad para título limpio
+    if (
+      classification.title.includes("Detecté una tarea") || 
+      classification.title.includes("Sección:") || 
+      classification.title.includes("Respondé CREAR") ||
+      classification.title.length > 120 || 
+      classification.title === "Sin título"
+    ) {
+      await sendTelegramMessage(chat_id, "⚠️ No pude generar una tarea limpia. Escribí la tarea en una frase simple.");
+      return new Response("OK", { status: 200 });
+    }
 
     const aiJson = {
       itemType: classification.itemType,
