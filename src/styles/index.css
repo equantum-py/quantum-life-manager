@@ -69,6 +69,7 @@ input, select, textarea, button {
 .app-page {
   flex: 1;
   width: 100%;
+  min-width: 0;
   padding-top: 1.5rem;
   padding-bottom: calc(120px + env(safe-area-inset-bottom));
   padding-left: 1rem;

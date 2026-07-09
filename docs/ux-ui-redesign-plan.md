@@ -7,7 +7,7 @@ Este plan detalla las etapas de ejecución para la transformación visual de Qua
 
 ## Etapas del Rediseño
 
-### UX-1: Sistema Visual Base
+### ~~UX-1: Sistema Visual Base~~ (COMPLETADO)
 El objetivo es establecer los cimientos (estilo iOS/PWA) antes de modificar vistas complejas.
 - **Estilo Visual:** Mantener paleta Quantum (azul principal, celeste acento, fondo claro, cards blancas, sombras suaves, bordes redondeados y glassmorphism suave).
 - **Tipografía y Jerarquía:** Títulos grandes, mucho espacio blanco (aire visual), y jerarquía visual fuerte.
