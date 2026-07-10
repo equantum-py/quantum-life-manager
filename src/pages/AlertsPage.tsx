@@ -84,6 +84,8 @@ export function AlertsPage() {
             <p className="mt-1 text-sm text-slate-400">Tus próximos avisos de tareas y reuniones aparecerán aquí.</p>
           </div>
         )}
+      </div>
+
       {/* Canales de Aviso */}
       <div className="mt-8 pt-6 border-t border-slate-100">
         <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400">Canales de Aviso Activos</h3>
