@@ -104,11 +104,11 @@ export function NotesPage() {
           className="min-h-14 rounded-[var(--qlm-radius-md)] text-[16px] shadow-sm border-white/60"
         />
 
-        <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8">
-          <div className="flex gap-2 pb-2">
+        <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8 [padding-right:calc(2rem+env(safe-area-inset-right))]">
+          <div className="flex w-max gap-2 pb-2">
             <button
               onClick={() => setSection('all')}
-              className={`app-pill shrink-0 ${section === 'all' ? '!bg-[var(--qlm-primary)] !text-white !border-none' : ''}`}
+              className={`app-pill shrink-0 whitespace-nowrap ${section === 'all' ? '!bg-[var(--qlm-primary)] !text-white !border-none' : ''}`}
             >
               Todas las áreas
             </button>
@@ -116,7 +116,7 @@ export function NotesPage() {
               <button
                 key={s.id}
                 onClick={() => setSection(s.id)}
-                className={`app-pill shrink-0 ${section === s.id ? '!bg-[var(--qlm-primary)] !text-white !border-none' : ''}`}
+                className={`app-pill shrink-0 whitespace-nowrap ${section === s.id ? '!bg-[var(--qlm-primary)] !text-white !border-none' : ''}`}
               >
                 {s.name}
               </button>

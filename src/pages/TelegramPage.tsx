@@ -188,8 +188,8 @@ export function TelegramPage() {
       <section className="pt-4">
         <h2 className="app-section-title">Mensajes Recientes</h2>
         
-        <div className="-mx-4 overflow-x-auto px-4 mb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8">
-          <div className="flex gap-2 pb-2">
+        <div className="-mx-4 overflow-x-auto px-4 mb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8 [padding-right:calc(2rem+env(safe-area-inset-right))]">
+          <div className="flex w-max gap-2 pb-2">
             {[
               { id: 'all', label: 'Todos' },
               { id: 'classified', label: 'Clasificados' },
@@ -199,7 +199,7 @@ export function TelegramPage() {
               <button
                 key={f.id}
                 onClick={() => setLogFilter(f.id as any)}
-                className={`app-pill shrink-0 ${
+                className={`app-pill shrink-0 whitespace-nowrap ${
                   logFilter === f.id
                     ? '!bg-[var(--qlm-primary)] !text-white !border-none'
                     : ''
@@ -273,8 +273,8 @@ export function TelegramPage() {
       <section className="pt-4">
         <h2 className="app-section-title">Acciones</h2>
         
-        <div className="-mx-4 overflow-x-auto px-4 mb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8">
-          <div className="flex gap-2 pb-2">
+        <div className="-mx-4 overflow-x-auto px-4 mb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8 [padding-right:calc(2rem+env(safe-area-inset-right))]">
+          <div className="flex w-max gap-2 pb-2">
             {[
               { id: 'all', label: 'Todas' },
               { id: 'pending', label: 'Pendientes' },
@@ -284,7 +284,7 @@ export function TelegramPage() {
               <button
                 key={f.id}
                 onClick={() => setActionFilter(f.id as any)}
-                className={`app-pill shrink-0 ${
+                className={`app-pill shrink-0 whitespace-nowrap ${
                   actionFilter === f.id
                     ? '!bg-[var(--qlm-primary)] !text-white !border-none'
                     : ''

@@ -317,14 +317,14 @@ function ChipScroller({
     <section>
       <p className="mb-2 text-[13px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
 
-      <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8">
-        <div className="flex gap-2 pb-2">
+      <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8 [padding-right:calc(2rem+env(safe-area-inset-right))]">
+        <div className="flex w-max gap-2 pb-2">
           {options.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => onChange(option.value)}
-              className={`app-pill shrink-0 ${
+              className={`app-pill shrink-0 whitespace-nowrap ${
                 value === option.value
                   ? '!bg-[var(--qlm-primary)] !text-white !border-none'
                   : ''
