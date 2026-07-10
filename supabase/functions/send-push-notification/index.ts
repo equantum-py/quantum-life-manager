@@ -24,6 +24,14 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "VAPID keys not configured in server" }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
 
+    console.log("[Push] VAPID Config:", {
+      hasPublicKey: !!VAPID_PUBLIC_KEY,
+      publicKeyLength: VAPID_PUBLIC_KEY.length,
+      hasPrivateKey: !!VAPID_PRIVATE_KEY,
+      privateKeyLength: VAPID_PRIVATE_KEY.length,
+      subject: VAPID_SUBJECT
+    });
+
     webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -39,8 +47,11 @@ serve(async (req) => {
     }
 
     if (subscriptions.length === 0) {
+      console.log(`[Push] No active subscriptions found for user: ${user_id}`);
       return new Response(JSON.stringify({ message: "No active subscriptions found for user", sent: 0, failed: 0, disabled: 0 }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
+
+    console.log(`[Push] Found ${subscriptions.length} active subscription(s) for user: ${user_id}`);
 
     const pushPayload = JSON.stringify({
       title,
@@ -55,6 +66,12 @@ serve(async (req) => {
     let disabled = 0;
 
     for (const sub of subscriptions) {
+      if (!sub.p256dh || !sub.auth) {
+        console.error(`[Push] Subscription keys missing for sub ID: ${sub.id}`);
+        failed++;
+        continue;
+      }
+
       const pushSubscription = {
         endpoint: sub.endpoint,
         keys: {
@@ -64,7 +81,11 @@ serve(async (req) => {
       };
 
       try {
+        const urlObj = new URL(sub.endpoint);
+        console.log(`[Push] Attempting send to host: ${urlObj.hostname}`);
+        
         await webpush.sendNotification(pushSubscription, pushPayload);
+        console.log(`[Push] Successfully sent to host: ${urlObj.hostname}`);
         sent++;
         
         // Log de éxito (silencioso si falla la tabla)
@@ -73,10 +94,16 @@ serve(async (req) => {
         });
       } catch (err: any) {
         failed++;
-        console.error("Error sending push to endpoint:", sub.endpoint, err?.statusCode);
+        console.error("[Push] Send failed", {
+          name: err?.name,
+          statusCode: err?.statusCode,
+          message: err?.message,
+          body: err?.body
+        });
         
         // Si el endpoint expiró o fue desuscripto
         if (err?.statusCode === 404 || err?.statusCode === 410) {
+          console.log(`[Push] Marking subscription ${sub.id} as inactive (404/410)`);
           await supabase.from("push_subscriptions").update({ is_active: false }).eq("id", sub.id);
           disabled++;
         }
