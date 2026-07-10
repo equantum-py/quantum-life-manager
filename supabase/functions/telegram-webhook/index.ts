@@ -588,6 +588,7 @@ serve(async (req) => {
           userId = usersData?.users?.[0]?.id || null;
         }
         if (userId) {
+           console.log(`[Telegram Reminder] Creating reminder with push user_id ${userId}`);
            const { error: rErr } = await supabase.from("reminders").insert({
               user_id: userId,
               source_type: "task",
@@ -625,13 +626,9 @@ serve(async (req) => {
     }
 
     let actionPayload: any = {};
-    let mappedUserId = getMappedUserId(chat_id);
-    if (!mappedUserId) {
-        const { data: usersData } = await supabase.auth.admin.listUsers();
-        mappedUserId = usersData?.users?.[0]?.id || null;
-    }
 
     if (actionType === "create_task") {
+      console.log("[Telegram Task] Creating task without user_id");
       actionPayload = {
         title: classData.title,
         description: text,
@@ -639,10 +636,10 @@ serve(async (req) => {
         priority: classData.priority,
         status: "Pendiente",
         due_date: classData.isoDateTime,
-        assignee: "Sin asignar",
-        user_id: mappedUserId
+        assignee: "Sin asignar"
       };
     } else if (actionType === "create_meeting") {
+      console.log("[Telegram Meeting] Creating meeting without user_id");
       const startH = classData.hour !== null ? String(classData.hour).padStart(2, '0') : "09";
       const startM = classData.minute !== null ? String(classData.minute).padStart(2, '0') : "00";
       const endH = classData.hour !== null ? String((classData.hour + 1) % 24).padStart(2, '0') : "10";
@@ -655,15 +652,14 @@ serve(async (req) => {
         start_time: `${startH}:${startM}:00`,
         end_time: `${endH}:${startM}:00`,
         type: "Reunión",
-        status: "Agendado",
-        user_id: mappedUserId
+        status: "Agendado"
       };
     } else if (actionType === "create_note") {
+      console.log("[Telegram Note] Creating note without user_id");
       actionPayload = {
         title: classData.title,
         content: text,
-        section_id: classData.section,
-        user_id: mappedUserId
+        section_id: classData.section
       };
     }
 
@@ -744,6 +740,7 @@ serve(async (req) => {
                 userId = usersData?.users?.[0]?.id || null;
              }
              if (userId) {
+                console.log(`[Telegram Reminder] Creating reminder with push user_id ${userId}`);
                 const { error: rErr } = await supabase.from("reminders").insert({
                    user_id: userId,
                    source_type: actionType === "create_task" ? "task" : "meeting",
