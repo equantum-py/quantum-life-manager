@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Bell, Clock, Info } from 'lucide-react';
-import { AlertCard } from '../components/cards/AlertCard';
-import { mockProjects } from '../data/mockProjects';
-import { mockTasks } from '../data/mockTasks';
-import { mockMeetings } from '../data/mockMeetings';
 import { authService } from '../services/authService';
-import { buildAlerts } from '../utils/alerts';
 import { remindersRepository } from '../services/repositories/remindersRepository';
 import { Reminder } from '../types/reminder';
 
@@ -13,12 +8,6 @@ export function AlertsPage() {
   const user = authService.current();
   
   if (!user) return null;
-
-  const tasks = mockTasks.filter(t => user.sections.includes(t.sectionId));
-  const meetings = mockMeetings.filter(m => user.sections.includes(m.sectionId));
-  const projects = user.sections.includes('equantum') ? mockProjects : [];
-  
-  const alerts = buildAlerts(tasks, meetings, projects);
 
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoadingReminders, setIsLoadingReminders] = useState(true);
@@ -40,12 +29,6 @@ export function AlertsPage() {
   return (
     <div className="space-y-6 animate-fade-in pb-8">
       <h2 className="app-mobile-title">Alertas</h2>
-      
-      {alerts.length > 0 && (
-        <div className="space-y-4">
-          {alerts.map(a => <AlertCard key={a.id} alert={a} />)}
-        </div>
-      )}
 
       {/* REM-2: Próximos Recordatorios */}
       <div className="mt-8">
