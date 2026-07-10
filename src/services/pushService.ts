@@ -58,6 +58,20 @@ export const pushService = {
     }
 
     const registration = await navigator.serviceWorker.ready;
+    
+    try {
+      const existingSubscription = await registration.pushManager.getSubscription();
+      if (existingSubscription) {
+        const unsubscribed = await existingSubscription.unsubscribe();
+        if (!unsubscribed) {
+          throw new Error('No se pudo actualizar la suscripción push. Borrá los permisos del sitio e intentá de nuevo.');
+        }
+      }
+    } catch (e: any) {
+      if (e.message.includes('No se pudo actualizar')) throw e;
+      console.warn("Could not check/unsubscribe existing subscription", e);
+    }
+
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
