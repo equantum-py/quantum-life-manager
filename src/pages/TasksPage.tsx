@@ -10,7 +10,9 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { mockSections } from '../data/mockSections';
 import { authService } from '../services/authService';
 import { taskRepository } from '../services/repositories';
+import { remindersRepository } from '../services/repositories/remindersRepository';
 import { todayISO, isPast } from '../utils/dates';
+import { getReminderOptionsForDate, calculateReminderTime, ReminderOption } from '../utils/reminderTime';
 
 const statuses = [
   'Pendiente',
@@ -35,6 +37,10 @@ export function TasksPage() {
   const [section, setSection] = useState('all');
   const [status, setStatus] = useState('all');
   const [priority, setPriority] = useState('all');
+  
+  // Nuevo estado para la opción seleccionada de recordatorio (en creación)
+  const [reminderOption, setReminderOption] = useState<ReminderOption>('none');
+  const [formDueDate, setFormDueDate] = useState(todayISO());
 
   const loadTasks = useCallback(async () => {
     try {
@@ -105,14 +111,37 @@ export function TasksPage() {
       if (editing) {
         await taskRepository.updateTask(editing.id, payload);
       } else {
-        await taskRepository.createTask({
+        const newTask = await taskRepository.createTask({
           ...payload,
           client: '', // placeholder for now or add to form
         });
+
+        // REM-3: Crear recordatorio si se seleccionó uno
+        if (reminderOption !== 'none' && newTask.id) {
+          const remindAt = calculateReminderTime(reminderOption, payload.dueDate);
+          if (remindAt) {
+            try {
+              await remindersRepository.createReminder({
+                user_id: user.id,
+                source_type: 'task',
+                source_id: newTask.id,
+                title: newTask.title,
+                remind_at: remindAt,
+                channel: 'app',
+                status: 'pending',
+                metadata: { priority: newTask.priority }
+              });
+            } catch (reminderErr) {
+              console.error('Error creando recordatorio suave:', reminderErr);
+              // Fallback suave, no rompemos la app
+            }
+          }
+        }
       }
       await loadTasks();
       setOpen(false);
       setEditing(null);
+      setReminderOption('none');
     } catch (err: any) {
       alert(`Error al guardar: ${err.message}`);
     }
@@ -239,6 +268,8 @@ export function TasksPage() {
         onClose={() => {
           setOpen(false);
           setEditing(null);
+          setReminderOption('none');
+          setFormDueDate(todayISO());
         }}
       >
         <form onSubmit={save} className="space-y-3">
@@ -286,8 +317,23 @@ export function TasksPage() {
           <Input
             name="dueDate"
             type="date"
-            defaultValue={editing?.dueDate || todayISO()}
+            value={formDueDate}
+            onChange={(e) => setFormDueDate(e.target.value)}
           />
+
+          {!editing && (
+            <Select
+              name="reminder"
+              value={reminderOption}
+              onChange={(e) => setReminderOption(e.target.value as ReminderOption)}
+            >
+              {getReminderOptionsForDate(formDueDate).map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </Select>
+          )}
 
           <Input
             name="assignee"

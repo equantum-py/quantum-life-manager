@@ -9,7 +9,9 @@ import { Modal } from '../components/ui/Modal';
 import { mockSections } from '../data/mockSections';
 import { authService } from '../services/authService';
 import { meetingRepository } from '../services/repositories';
+import { remindersRepository } from '../services/repositories/remindersRepository';
 import { todayISO } from '../utils/dates';
+import { getReminderOptionsForDate, calculateReminderTime, ReminderOption } from '../utils/reminderTime';
 
 export function AgendaPage() {
   const user = authService.current()!;
@@ -20,6 +22,10 @@ export function AgendaPage() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Meeting | null>(null);
+
+  const [reminderOption, setReminderOption] = useState<ReminderOption>('none');
+  const [formDate, setFormDate] = useState(todayISO());
+  const [formTime, setFormTime] = useState('09:00');
 
   const loadMeetings = useCallback(async () => {
     try {
@@ -65,11 +71,35 @@ export function AgendaPage() {
       if (editing) {
         await meetingRepository.updateMeeting(editing.id, payload);
       } else {
-        await meetingRepository.createMeeting(payload);
+        const newMeeting = await meetingRepository.createMeeting(payload);
+        
+        // REM-3: Crear recordatorio si se seleccionó uno
+        if (reminderOption !== 'none' && newMeeting.id) {
+          // Combinar fecha y hora para la base
+          const baseDateTime = `${payload.date}T${payload.startTime}:00`;
+          const remindAt = calculateReminderTime(reminderOption, baseDateTime);
+          if (remindAt) {
+            try {
+              await remindersRepository.createReminder({
+                user_id: user.id,
+                source_type: 'meeting',
+                source_id: newMeeting.id,
+                title: newMeeting.title,
+                remind_at: remindAt,
+                channel: 'app',
+                status: 'pending',
+                metadata: { location: newMeeting.location }
+              });
+            } catch (reminderErr) {
+              console.error('Error creando recordatorio de reunión:', reminderErr);
+            }
+          }
+        }
       }
       await loadMeetings();
       setOpen(false);
       setEditing(null);
+      setReminderOption('none');
     } catch (err: any) {
       alert(`Error al guardar: ${err.message}`);
     }
@@ -139,6 +169,9 @@ export function AgendaPage() {
         onClose={() => {
           setOpen(false);
           setEditing(null);
+          setReminderOption('none');
+          setFormDate(todayISO());
+          setFormTime('09:00');
         }}
       >
         <form onSubmit={save} className="space-y-4">
@@ -166,13 +199,15 @@ export function AgendaPage() {
           <Input
             name="date"
             type="date"
-            defaultValue={editing?.date || todayISO()}
+            value={formDate}
+            onChange={(e) => setFormDate(e.target.value)}
           />
           <div className="grid grid-cols-2 gap-3">
             <Input
               name="startTime"
               type="time"
-              defaultValue={editing?.startTime || '09:00'}
+              value={formTime}
+              onChange={(e) => setFormTime(e.target.value)}
             />
             <Input
               name="endTime"
@@ -180,6 +215,20 @@ export function AgendaPage() {
               defaultValue={editing?.endTime || '10:00'}
             />
           </div>
+          
+          {!editing && (
+            <Select
+              name="reminder"
+              value={reminderOption}
+              onChange={(e) => setReminderOption(e.target.value as ReminderOption)}
+            >
+              {getReminderOptionsForDate(`${formDate}T${formTime}:00`).map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </Select>
+          )}
           <Input
             name="location"
             defaultValue={editing?.location}
