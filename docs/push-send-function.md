@@ -46,3 +46,6 @@ curl -i --location --request POST 'https://<tu-project-ref>.supabase.co/function
 - **Teléfono/Navegador:** Asegúrate de que no estás en "No molestar" (Do Not Disturb) y tienes permisos de notificaciones habilitados a nivel de Sistema Operativo para ese navegador.
 - **Respuesta de la Función:** La función devuelve un JSON del estilo `{"message":"Push process completed","sent":1,"failed":0,"disabled":0}`. Si `failed` es 1 y `disabled` es 1, significa que el token expiró (código HTTP 410) y Supabase lo marcó como inactivo. Debes desactivar y reactivar desde Ajustes en la app.
 - **Logs:** Revisa la pestaña Edge Functions > Logs en tu panel de Supabase. Nunca logueamos las claves VAPID allí por seguridad.
+
+## 6. Estado de Validación
+✅ **Push manual real validado en dispositivo móvil.** La función envía las cargas cifradas correctamente a través de los servidores PUSH de los navegadores, y la PWA despierta en background para mostrar la notificación.
