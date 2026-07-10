@@ -37,6 +37,23 @@ export function AlertsPage() {
           <p className="font-medium text-slate-600">Todavía no hay recordatorios activos.</p>
           <p className="mt-1 text-sm text-slate-400">Las notificaciones proactivas estarán disponibles pronto.</p>
         </div>
+      {/* Canales de Aviso */}
+      <div className="mt-8 pt-6 border-t border-slate-100">
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400">Canales de Aviso Activos</h3>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
+            <div className="h-2 w-2 rounded-full bg-green-500 mb-2"></div>
+            <span className="text-xs font-semibold text-slate-600">Telegram</span>
+          </div>
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
+            <div className="h-2 w-2 rounded-full bg-green-500 mb-2"></div>
+            <span className="text-xs font-semibold text-slate-600">App</span>
+          </div>
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-slate-50 p-4 border border-dashed border-slate-200 opacity-60">
+            <div className="h-2 w-2 rounded-full bg-slate-300 mb-2"></div>
+            <span className="text-xs font-semibold text-slate-400">Push (Pronto)</span>
+          </div>
+        </div>
       </div>
     </div>
   );
