@@ -38,6 +38,18 @@
 - [x] Mobile safe areas verificados en layout y componentes.
 - [x] Rutas principales operativas sin afectar el shell de la PWA.
 
+## QA-2: Test Funcional Final (v1 Release)
+- [x] **Build**: Compilación exitosa, código TypeScript libre de errores estructurales.
+- [x] **Rutas**: Navegación fluida en `/login`, `/dashboard`, `/tasks`, `/agenda`, `/notes`, `/telegram`, `/alerts`, `/sections`, y `/settings`.
+- [x] **Auth**: Inicio y cierre de sesión operativos; bloqueo nativo de rutas protegidas para no autenticados.
+- [x] **Tareas**: Listado correcto, creación operativa y marcaje de estados.
+- [x] **Agenda**: Eventos se renderizan sin problemas de fechas, creación operativa.
+- [x] **Notas**: Listado y creación operativos, búsqueda funcionando.
+- [x] **Telegram Assistant**: La simulación confirma que la lógica multi-turno (solicitud de sección y auto-creación final) está intacta. Las intenciones naturales de Tareas, Reuniones y Notas impactan en las tablas correctas sin ensuciar la app.
+- [x] **PWA**: Instalación activa, iconos vinculados, shell nativa standalone operativa.
+- [x] **Mobile Experience**: Navegación segura (sin scroll horizontal global, bottom nav sin solapamientos, safe areas perfectos).
+- [x] **Desktop Experience**: Sidebar colapsado correctamente, grid espacioso funcional.
+
 ## Pendientes Conocidos (Futuro)
 - Conectar IA real (OpenAI/Gemini) para mejorar la detección avanzada de lenguaje natural.
 - Funciones de borrado, edición o confirmación en `/telegram` deshabilitadas en esta fase visual.
