@@ -10,6 +10,14 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 // ==========================================
 // 1. HELPERS BASICOS
 // ==========================================
+function getMappedUserId(chatId: string | undefined): string | null {
+  if (chatId === "5976600727") {
+    console.log("[Telegram User Mapping] chat_id 5976600727 mapped to user_id 9a154a6a-a30c-4657-9b0b-11b7cc1b303d");
+    return "9a154a6a-a30c-4657-9b0b-11b7cc1b303d";
+  }
+  return null;
+}
+
 function isBotGeneratedMessage(text: string): boolean {
   const lowerText = text.toLowerCase();
   return lowerText.includes("listo señor") ||
@@ -574,8 +582,11 @@ serve(async (req) => {
         const remindAt = origD.toISOString();
         let reminderError = false;
 
-        const { data: usersData } = await supabase.auth.admin.listUsers();
-        const userId = usersData?.users?.[0]?.id;
+        let userId = getMappedUserId(chat_id);
+        if (!userId) {
+          const { data: usersData } = await supabase.auth.admin.listUsers();
+          userId = usersData?.users?.[0]?.id || null;
+        }
         if (userId) {
            const { error: rErr } = await supabase.from("reminders").insert({
               user_id: userId,
@@ -614,6 +625,12 @@ serve(async (req) => {
     }
 
     let actionPayload: any = {};
+    let mappedUserId = getMappedUserId(chat_id);
+    if (!mappedUserId) {
+        const { data: usersData } = await supabase.auth.admin.listUsers();
+        mappedUserId = usersData?.users?.[0]?.id || null;
+    }
+
     if (actionType === "create_task") {
       actionPayload = {
         title: classData.title,
@@ -622,7 +639,8 @@ serve(async (req) => {
         priority: classData.priority,
         status: "Pendiente",
         due_date: classData.isoDateTime,
-        assignee: "Sin asignar"
+        assignee: "Sin asignar",
+        user_id: mappedUserId
       };
     } else if (actionType === "create_meeting") {
       const startH = classData.hour !== null ? String(classData.hour).padStart(2, '0') : "09";
@@ -637,13 +655,15 @@ serve(async (req) => {
         start_time: `${startH}:${startM}:00`,
         end_time: `${endH}:${startM}:00`,
         type: "Reunión",
-        status: "Agendado"
+        status: "Agendado",
+        user_id: mappedUserId
       };
     } else if (actionType === "create_note") {
       actionPayload = {
         title: classData.title,
         content: text,
-        section_id: classData.section
+        section_id: classData.section,
+        user_id: mappedUserId
       };
     }
 
@@ -718,8 +738,11 @@ serve(async (req) => {
            }
            
            if (remindAt) {
-             const { data: usersData } = await supabase.auth.admin.listUsers();
-             const userId = usersData?.users?.[0]?.id;
+             let userId = getMappedUserId(chat_id);
+             if (!userId) {
+                const { data: usersData } = await supabase.auth.admin.listUsers();
+                userId = usersData?.users?.[0]?.id || null;
+             }
              if (userId) {
                 const { error: rErr } = await supabase.from("reminders").insert({
                    user_id: userId,

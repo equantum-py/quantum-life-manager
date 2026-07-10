@@ -77,3 +77,6 @@ El despliegue de la función `telegram-webhook` se realiza mediante **GitHub Act
 - Requiere tener el secreto `SUPABASE_ACCESS_TOKEN` configurado en el repositorio de GitHub.
 - Requiere tener el secreto `OPENAI_API_KEY` configurado internamente en Supabase Secrets (para la función de Whisper).
 
+### 6. Mapeo de Usuarios
+*(Nota: Telegram `chat_id` `5976600727` está explícitamente mapeado al usuario interno `Derlis` (`9a154a6a-a30c-4657-9b0b-11b7cc1b303d`) para asegurar que todos los registros y recordatorios Push se vinculen correctamente a su dispositivo).*
+
