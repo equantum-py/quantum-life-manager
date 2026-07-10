@@ -40,12 +40,27 @@ El flujo de conexión utilizará dos Edge Functions dedicadas para evitar lidiar
 - `google-calendar-create-event`: Edge Function utilitaria invocable desde otras funciones (como el webhook de Telegram) para inyectar eventos.
 
 ## 7. Pasos de Implementación
-1. Configurar aplicación en Google Cloud Console (OAuth consent screen).
-2. Obtener Client ID y Secret.
-3. Desplegar el esquema SQL propuesto (previa validación de Vault).
-4. Escribir y desplegar funciones de Auth Start y Callback.
-5. Crear botón de vinculación real en `/settings`.
-6. Modificar el webhook de Telegram para invocar a la API de Calendar tras una inserción exitosa.
+1. **Configurar aplicación en Google Cloud Console**:
+   - Crear un nuevo proyecto o seleccionar uno existente en [Google Cloud Console](https://console.cloud.google.com/).
+   - Habilitar la **Google Calendar API**.
+   - Configurar la **OAuth consent screen** (Pantalla de consentimiento) seleccionando tipo de usuario "Externo" (si no es Google Workspace). En estado Testing añadir el email de Derlis como *Test user*.
+   - Configurar los scopes: `https://www.googleapis.com/auth/calendar.events`
+2. **Obtener Credenciales**:
+   - Ir a Credentials -> Create Credentials -> OAuth client ID.
+   - Tipo de aplicación: Web application.
+   - **Authorized redirect URIs**: `https://alvrowgxqusotjwiaryu.supabase.co/functions/v1/google-calendar-callback` (Ajustar al Project Ref real).
+   - Copiar `Client ID` y `Client Secret`.
+3. **Variables de Entorno (Supabase Secrets)**:
+   - Configurar en el proyecto de Supabase (y en el archivo `.env` local para pruebas) mediante el CLI:
+     ```bash
+     supabase secrets set GOOGLE_CLIENT_ID="tu-client-id"
+     supabase secrets set GOOGLE_CLIENT_SECRET="tu-client-secret"
+     supabase secrets set GOOGLE_REDIRECT_URI="https://alvrowgxqusotjwiaryu.supabase.co/functions/v1/google-calendar-callback"
+     ```
+4. Desplegar el esquema SQL propuesto: `supabase/google_calendar_schema.sql`.
+5. Escribir y desplegar las funciones de Auth Start y Callback.
+6. Crear botón de vinculación real en `/settings` en el frontend.
+7. Modificar el webhook de Telegram o utilizar `create-event` para sincronizar.
 
 ## 8. Checklist Pre-Despliegue CAL-1
 - [ ] Aplicación en Google Cloud verificada (o en estado "Testing" para correos autorizados).
