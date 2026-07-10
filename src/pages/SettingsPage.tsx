@@ -1,10 +1,45 @@
-import { Calendar, Bell, Smartphone } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, Bell, Smartphone, CheckCircle, Loader2 } from 'lucide-react';
 import { authService } from '../services/authService';
 import { dataMode } from '../lib/supabaseClient';
+import { pushService } from '../services/pushService';
 
 export function SettingsPage() {
   const user = authService.current();
   
+  const [isPushSupported, setIsPushSupported] = useState(false);
+  const [pushStatus, setPushStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [pushError, setPushError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsPushSupported(pushService.isPushSupported());
+    if (pushService.isPushSupported()) {
+      pushService.registerServiceWorker();
+    }
+  }, []);
+
+  const handleEnablePush = async () => {
+    if (!user) return;
+    setPushStatus('loading');
+    setPushError(null);
+
+    try {
+      const permission = await pushService.requestNotificationPermission();
+      if (permission !== 'granted') {
+        throw new Error('Permiso denegado por el navegador.');
+      }
+
+      const subscription = await pushService.subscribeToPush();
+      await pushService.savePushSubscription(user.id, subscription);
+      
+      setPushStatus('success');
+    } catch (err: any) {
+      console.error('Error enabling push:', err);
+      setPushStatus('error');
+      setPushError(err.message || 'Error al activar notificaciones');
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -77,17 +112,47 @@ export function SettingsPage() {
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-slate-700">Estado</span>
-            <span className="app-badge bg-indigo-100 text-indigo-700">En preparación</span>
+            <span className={`app-badge ${
+              !isPushSupported ? 'bg-slate-200 text-slate-600' :
+              pushStatus === 'success' ? 'bg-green-100 text-green-700' :
+              'bg-slate-200 text-slate-600'
+            }`}>
+              {!isPushSupported ? 'No Soportado' : pushStatus === 'success' ? 'Activadas' : 'No Activadas'}
+            </span>
           </div>
-          <p className="mt-3 text-sm text-slate-600">Próximamente vas a poder recibir avisos en tu teléfono aunque la app no esté abierta.</p>
+          
+          {pushStatus === 'success' && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl bg-green-50 p-3 text-sm text-green-700">
+              <CheckCircle size={16} className="mt-0.5 shrink-0" />
+              <p>Este dispositivo ya puede recibir notificaciones.</p>
+            </div>
+          )}
+
+          {pushStatus === 'error' && (
+            <p className="mt-3 text-sm text-red-600">
+              {pushError}
+            </p>
+          )}
+
+          {pushStatus === 'idle' && isPushSupported && (
+            <p className="mt-3 text-sm text-slate-600">Recibe avisos de tareas vencidas y reuniones inminentes directamente en tu teléfono.</p>
+          )}
         </div>
 
-        <button 
-          className="app-button-secondary w-full opacity-50 cursor-not-allowed" 
-          disabled
-        >
-          Activar notificaciones (Próximamente)
-        </button>
+        {isPushSupported && pushStatus !== 'success' && (
+          <button 
+            onClick={handleEnablePush}
+            disabled={pushStatus === 'loading'}
+            className="app-button w-full" 
+          >
+            {pushStatus === 'loading' ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 size={18} className="animate-spin" />
+                Activando...
+              </span>
+            ) : 'Activar notificaciones'}
+          </button>
+        )}
       </div>
     </div>
   );
