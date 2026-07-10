@@ -59,3 +59,17 @@
 2. Comprobar inicio de sesión.
 3. Verificar que `/telegram` es accesible para un admin.
 4. Mandar un mensaje desde Telegram y observar el flujo de log y clasificación en el panel en vivo.
+
+### Despliegue (Deploy) de Edge Function
+El despliegue de la función `telegram-webhook` se realiza mediante **GitHub Actions** (`.github/workflows/deploy-supabase-function.yml`), el cual:
+- Permite la ejecución manual (`workflow_dispatch`).
+- Utiliza la CLI de Supabase en Ubuntu para publicar el código al entorno productivo.
+- Requiere tener el secreto `SUPABASE_ACCESS_TOKEN` configurado en el repositorio de GitHub.
+- Requiere tener el secreto `OPENAI_API_KEY` configurado internamente en Supabase Secrets (para la función de Whisper).
+
+## Limpieza de datos de prueba pendiente/completada
+- [ ] Auditoría SQL preparada (`cleanup_audit.sql`).
+- [ ] Candidatos a borrar revisados visualmente.
+- [ ] Backup/Export de tablas sensibles realizado en el dashboard.
+- [ ] Limpieza ejecutada manualmente con `cleanup_test_data.sql`.
+- [ ] Rutas front-end validadas tras la purga para evitar interfaces rotas.
