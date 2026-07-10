@@ -77,6 +77,7 @@ El despliegue de la función `telegram-webhook` se realiza mediante **GitHub Act
 ## Próximamente (v1.1) - Fase de Planificación CERRADA
 - [x] **Google Calendar (CAL-1):** Planificado y esquema SQL documentado.
 - [x] **Recordatorios (REM-1):** Planificado y esquema SQL documentado.
+- [x] **Recordatorios (REM-2):** Base de datos estructurada, RLS seguro y frontend preparado con fallback. (SQL requiere ejecución manual).
 - [x] **Push Notifications (PUSH-1):** Plan documentado, SQL propuesto y UI en preparación.
 
 *⚠️ Implementación real pendiente. Ver `docs/roadmap-v1.1.md` para el orden de ejecución.*
