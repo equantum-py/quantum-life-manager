@@ -1,15 +1,23 @@
 import { supabase } from '../../lib/supabaseClient';
 import { Reminder } from '../../types/reminder';
 
+function getSupabaseClient() {
+  if (!supabase) {
+    throw new Error("Supabase no está configurado");
+  }
+  return supabase;
+}
+
 export const remindersRepository = {
   async listReminders(): Promise<Reminder[]> {
+    if (!supabase) return [];
+    
     const { data, error } = await supabase
       .from('reminders')
       .select('*')
       .order('remind_at', { ascending: true });
 
     if (error) {
-      // Return empty array gracefully if table doesn't exist yet
       if (error.code === '42P01' || error.message.includes('relation "public.reminders" does not exist')) {
         return [];
       }
@@ -19,6 +27,8 @@ export const remindersRepository = {
   },
 
   async listUpcomingReminders(): Promise<Reminder[]> {
+    if (!supabase) return [];
+
     const { data, error } = await supabase
       .from('reminders')
       .select('*')
@@ -35,7 +45,8 @@ export const remindersRepository = {
   },
 
   async createReminder(reminder: Omit<Reminder, 'id' | 'created_at' | 'updated_at'>): Promise<Reminder> {
-    const { data, error } = await supabase
+    const client = getSupabaseClient();
+    const { data, error } = await client
       .from('reminders')
       .insert(reminder)
       .select()
@@ -46,7 +57,8 @@ export const remindersRepository = {
   },
 
   async updateReminder(id: string, updates: Partial<Reminder>): Promise<Reminder> {
-    const { data, error } = await supabase
+    const client = getSupabaseClient();
+    const { data, error } = await client
       .from('reminders')
       .update(updates)
       .eq('id', id)
@@ -58,7 +70,8 @@ export const remindersRepository = {
   },
 
   async cancelReminder(id: string): Promise<void> {
-    const { error } = await supabase
+    const client = getSupabaseClient();
+    const { error } = await client
       .from('reminders')
       .update({ status: 'cancelled' })
       .eq('id', id);
@@ -67,7 +80,8 @@ export const remindersRepository = {
   },
 
   async deleteReminder(id: string): Promise<void> {
-    const { error } = await supabase
+    const client = getSupabaseClient();
+    const { error } = await client
       .from('reminders')
       .delete()
       .eq('id', id);
