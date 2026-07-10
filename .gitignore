@@ -5,3 +5,10 @@ dist
 .DS_Store
 
 *.tsbuildinfo
+
+# Supabase CLI locales
+supabase.exe
+*.exe
+supabase/.temp/
+supabase/.branches/
+**/linked-project.json
