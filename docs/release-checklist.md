@@ -79,8 +79,8 @@ El despliegue de la función `telegram-webhook` se realiza mediante **GitHub Act
 - [x] **Recordatorios (REM-1):** Planificado y esquema SQL documentado.
 - [x] **Recordatorios (REM-2):** Base de datos estructurada, RLS seguro y frontend preparado con fallback. (SQL requiere ejecución manual).
 - [x] **Push Notifications (PUSH-1):** Plan documentado, SQL propuesto y UI en preparación.
-- [x] **Push Subscriptions (PUSH-2/3):** Service worker inyectado y frontend adaptado para captar permisos de notificaciones.
-- [x] **Push Edge Function (PUSH-4):** Función `send-push-notification` lista y probada manualmente. (Push manual real validado en dispositivo móvil). Integración con automáticos pendiente (PUSH-5).
+- [x] **Push Edge Function (PUSH-4):** Función `send-push-notification` lista y probada manualmente. (Push manual real validado en dispositivo móvil).
+- [x] **Push Automático (PUSH-5):** Edge Function `process-reminders` creada y Cron job `process-reminders-every-minute` habilitado. (Cron automático validado en producción con notificación real recibida en dispositivo móvil).
 
 *⚠️ Implementación real pendiente. Ver `docs/roadmap-v1.1.md` para el orden de ejecución.*
 - [ ] No ejecutar SQL de v1.1 sin revisión estricta de RLS.

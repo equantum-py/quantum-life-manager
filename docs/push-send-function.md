@@ -49,3 +49,5 @@ curl -i --location --request POST 'https://<tu-project-ref>.supabase.co/function
 
 ## 6. Estado de Validación
 ✅ **Push manual real validado en dispositivo móvil.** La función envía las cargas cifradas correctamente a través de los servidores PUSH de los navegadores, y la PWA despierta en background para mostrar la notificación.
+
+*(Nota: La automatización global ahora recae sobre la función hermana `process-reminders`, la cual es disparada por el cron job `process-reminders-every-minute`. Ver `docs/push-automatic-reminders.md` para detalles).*
