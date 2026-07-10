@@ -243,12 +243,15 @@ async function checkDuplicates(actionType: string, classData: any) {
   return false;
 }
 
-function formatNaturalResponse(actionType: string, payload: any, classData: any = null) {
+function formatNaturalResponse(actionType: string, payload: any, classData: any = null, isVoice: boolean = false) {
   const sec = capitalize(payload.section_id);
   const rawTitle = payload.title;
+  const prefix = isVoice ? "Escuché tu audio. " : "Listo señor, ";
+  const altPrefix = isVoice ? "Escuché tu audio. Agendé" : "Listo señor, agendé";
+  const savePrefix = isVoice ? "Escuché tu audio. Guardé" : "Listo señor, guardé";
 
   if (actionType === "create_note") {
-    return `Listo señor, guardé la nota sobre ${rawTitle.toLowerCase()} en ${sec}.`;
+    return `${prefix}guardé la nota sobre ${rawTitle.toLowerCase()} en ${sec}.`;
   }
   if (actionType === "create_meeting") {
     const d = classData?.explicitDate || payload.date || "hoy";
@@ -257,18 +260,65 @@ function formatNaturalResponse(actionType: string, payload: any, classData: any 
     if (t.toLowerCase().startsWith("reunión ")) {
       t = t.substring(8).trim();
     }
-    return `Listo señor, agendé la reunión ${t} para ${d} a las ${h} en ${sec}.`;
+    return `${altPrefix} la reunión ${t} para ${d} a las ${h} en ${sec}.`;
   }
   
   // Tasks / Reminders
   const d = classData?.explicitDate || (payload.due_date ? payload.due_date.split('T')[0] : "hoy");
   const timeStr = classData?.timeLabel || (payload.due_date ? payload.due_date.split('T')[1]?.slice(0, 5) : "");
   const h = (timeStr && timeStr !== "00:00") ? ` a las ${timeStr}` : "";
-  return `Listo señor, guardé la tarea "${payload.title}" para ${d}${h} en ${sec}.`;
+  return `${savePrefix} la tarea "${payload.title}" para ${d}${h} en ${sec}.`;
 }
 
 // ==========================================
-// 4. MAIN HANDLER
+// 4. TRANSCRIPCION
+// ==========================================
+async function transcribeAudio(file_id: string, bot_token: string): Promise<string | null> {
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (!OPENAI_API_KEY) {
+    console.error("Missing OPENAI_API_KEY");
+    return null;
+  }
+  
+  try {
+    const fileRes = await fetch(`https://api.telegram.org/bot${bot_token}/getFile?file_id=${file_id}`);
+    const fileData = await fileRes.json();
+    if (!fileData.ok || !fileData.result?.file_path) return null;
+    
+    const downloadRes = await fetch(`https://api.telegram.org/file/bot${bot_token}/${fileData.result.file_path}`);
+    if (!downloadRes.ok) return null;
+    
+    const blob = await downloadRes.blob();
+    const file = new File([blob], "audio.ogg", { type: blob.type || "audio/ogg" });
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("model", "whisper-1");
+    formData.append("language", "es");
+    
+    const aiRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: formData
+    });
+    
+    const aiData = await aiRes.json();
+    if (aiData.error) {
+      console.error("OpenAI transcription error:", aiData.error);
+      return null;
+    }
+    
+    return aiData.text;
+  } catch (err) {
+    console.error("Error transcribing audio:", err);
+    return null;
+  }
+}
+
+// ==========================================
+// 5. MAIN HANDLER
 // ==========================================
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*" } });
@@ -276,13 +326,39 @@ serve(async (req) => {
   try {
     const payload = await req.json();
     const message = payload.message;
-    if (!message || !message.text) return new Response("OK", { status: 200 });
+    if (!message) return new Response("OK", { status: 200 });
 
-    const update_id = payload.update_id?.toString();
     const chat_id = message.chat?.id?.toString();
+    const update_id = payload.update_id?.toString();
     const from_id = message.from?.id?.toString();
     const from_username = message.from?.username;
-    const text = message.text.trim();
+
+    let text = "";
+    let isVoice = false;
+
+    if (message.voice || message.audio) {
+      const file_id = message.voice?.file_id || message.audio?.file_id;
+      if (!file_id) return new Response("OK", { status: 200 });
+      
+      const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+      if (!OPENAI_API_KEY) {
+        await sendTelegramMessage(chat_id, "Todavía no está configurada la transcripción de audio.");
+        return new Response("OK", { status: 200 });
+      }
+
+      const transcribed = await transcribeAudio(file_id, TELEGRAM_BOT_TOKEN);
+      
+      if (!transcribed) {
+        await sendTelegramMessage(chat_id, "No pude entender el audio. ¿Podés enviarlo de nuevo o escribirlo?");
+        return new Response("OK", { status: 200 });
+      }
+      text = transcribed.trim();
+      isVoice = true;
+    } else if (message.text) {
+      text = message.text.trim();
+    } else {
+      return new Response("OK", { status: 200 });
+    }
 
     if (isBotGeneratedMessage(text)) return new Response("OK", { status: 200 });
 
@@ -414,7 +490,8 @@ serve(async (req) => {
         await supabase.from("telegram_pending_actions").update({ payload: updatedPayload, status: "confirmed", confirmed_at: new Date().toISOString() }).eq("id", currentPending.id);
         const originalText = updatedPayload.description || updatedPayload.content || "";
         const cData = extractDateTime(originalText);
-        await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, updatedPayload, cData));
+        // Recordar isVoice al resolver un fallback
+        await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, updatedPayload, cData, isVoice));
       }
       return new Response("OK", { status: 200 });
     }
@@ -469,6 +546,7 @@ serve(async (req) => {
     const aiJson = {
       itemType: intent,
       intent: intent,
+      isVoice: isVoice,
       section: { sectionId: classData.section, reasoning: "Mock classifier natural" },
       extractedData: { title: classData.title, date: classData.explicitDate, isoDate: classData.isoDateTime, priority: classData.priority },
       status: "ready"
@@ -499,7 +577,7 @@ serve(async (req) => {
         await sendTelegramMessage(chat_id, "Señor, entendí el pedido, pero no pude guardarlo por un problema interno. Quedó pendiente.");
       } else {
         await supabase.from("telegram_pending_actions").insert({ telegram_chat_id: chat_id, telegram_user_id: from_id, action_type: actionType, status: "confirmed", confirmed_at: new Date().toISOString(), classification_id: aiClassId, telegram_log_id: tgLog?.id, payload: actionPayload });
-        await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, actionPayload, classData));
+        await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, actionPayload, classData, isVoice));
       }
     } else {
       // Necesita intervención
@@ -507,7 +585,8 @@ serve(async (req) => {
       await supabase.from("telegram_pending_actions").insert({ telegram_chat_id: chat_id, telegram_user_id: from_id, action_type: actionType, status: pStatus, classification_id: aiClassId, telegram_log_id: tgLog?.id, payload: actionPayload });
 
       if (pStatus === "needs_section") {
-        await sendTelegramMessage(chat_id, "Claro señor. ¿En qué sección lo guardo: Familia, eQuantum, Inverfin, Iglesia o IDEAR?");
+        const prefix = isVoice ? "Escuché tu audio. " : "Claro señor. ";
+        await sendTelegramMessage(chat_id, `${prefix}¿En qué sección lo guardo: Familia, eQuantum, Inverfin, Iglesia o IDEAR?`);
       } else {
         await sendTelegramMessage(chat_id, `Señor, tengo la acción lista:\n\nTítulo: ${classData.title}\n\nRespondé CREAR para guardar o CANCELAR para descartar.`);
       }

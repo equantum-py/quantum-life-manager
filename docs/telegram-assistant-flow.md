@@ -51,3 +51,10 @@ El bot evalúa el mensaje entrante y detecta una de las siguientes intenciones (
 
 ## Futuro del Parser
 Actualmente las funciones `classifyMessage`, `detectIntent` y `extractDateTime` utilizan reglas duras y RegEx. En la fase de integración de IA real, toda la función `classifyMessage` será reemplazada por una llamada directa a OpenAI/Gemini que devolverá un JSON estructurado con el `actionType` y los `extractedData`. La arquitectura de estado `pending_action` se mantendrá intacta.
+
+## TG-9 Voice Notes
+El Asistente es capaz de escuchar notas de voz (`message.voice` o `message.audio`) en la fase TG-9.
+- Recibe el audio y lo descarga usando los servidores de Telegram.
+- Transcribe el audio utilizando **OpenAI Whisper** (`whisper-1`).
+- Pasa el texto transcripto al flujo exacto actual.
+- Adapta su respuesta ("Escuché tu audio...") para ser más empático, manteniendo intactas las capacidades de creación de Tareas, Reuniones y Notas con auto-guardado o petición de sección.
