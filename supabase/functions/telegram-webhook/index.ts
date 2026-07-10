@@ -276,26 +276,39 @@ function formatNaturalResponse(actionType: string, payload: any, classData: any 
 async function transcribeAudio(file_id: string, bot_token: string): Promise<string | null> {
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   if (!OPENAI_API_KEY) {
-    console.error("Missing OPENAI_API_KEY");
+    console.log("[Voice] Error: Missing OPENAI_API_KEY");
     return null;
   }
   
   try {
+    console.log(`[Voice] Requesting file path for file_id: ${file_id.substring(0, 10)}...`);
     const fileRes = await fetch(`https://api.telegram.org/bot${bot_token}/getFile?file_id=${file_id}`);
     const fileData = await fileRes.json();
-    if (!fileData.ok || !fileData.result?.file_path) return null;
+    if (!fileData.ok || !fileData.result?.file_path) {
+      console.log("[Voice] Error getting file path from Telegram");
+      return null;
+    }
     
-    const downloadRes = await fetch(`https://api.telegram.org/file/bot${bot_token}/${fileData.result.file_path}`);
-    if (!downloadRes.ok) return null;
+    const filePath = fileData.result.file_path;
+    console.log(`[Voice] Downloading file from Telegram: ${filePath}`);
+    
+    const downloadRes = await fetch(`https://api.telegram.org/file/bot${bot_token}/${filePath}`);
+    if (!downloadRes.ok) {
+      console.log(`[Voice] Error downloading file: ${downloadRes.status}`);
+      return null;
+    }
     
     const blob = await downloadRes.blob();
-    const file = new File([blob], "audio.ogg", { type: blob.type || "audio/ogg" });
+    console.log(`[Voice] Downloaded audio blob size: ${blob.size} bytes`);
+    
+    const file = new File([blob], "voice.ogg", { type: "audio/ogg" });
     
     const formData = new FormData();
     formData.append("file", file);
     formData.append("model", "whisper-1");
     formData.append("language", "es");
     
+    console.log("[Voice] Sending to OpenAI Whisper...");
     const aiRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST",
       headers: {
@@ -304,15 +317,16 @@ async function transcribeAudio(file_id: string, bot_token: string): Promise<stri
       body: formData
     });
     
+    console.log(`[Voice] OpenAI response status: ${aiRes.status}`);
     const aiData = await aiRes.json();
     if (aiData.error) {
-      console.error("OpenAI transcription error:", aiData.error);
+      console.log("[Voice] OpenAI transcription error:", aiData.error.message || "Unknown error");
       return null;
     }
     
     return aiData.text;
-  } catch (err) {
-    console.error("Error transcribing audio:", err);
+  } catch (err: any) {
+    console.log("[Voice] Internal Error transcribing audio:", err.message || err);
     return null;
   }
 }
@@ -337,7 +351,17 @@ serve(async (req) => {
     let isVoice = false;
 
     if (message.voice || message.audio) {
-      const file_id = message.voice?.file_id || message.audio?.file_id;
+      const voiceObj = message.voice || message.audio;
+      const file_id = voiceObj.file_id;
+      const duration = voiceObj.duration;
+      
+      console.log(`[Voice] Received audio message. Duration: ${duration}s`);
+      
+      if (duration !== undefined && duration < 2) {
+        await sendTelegramMessage(chat_id, "El audio fue muy corto. Enviame una nota de voz un poco más larga, de 3 a 5 segundos.");
+        return new Response("OK", { status: 200 });
+      }
+
       if (!file_id) return new Response("OK", { status: 200 });
       
       const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
@@ -349,7 +373,7 @@ serve(async (req) => {
       const transcribed = await transcribeAudio(file_id, TELEGRAM_BOT_TOKEN);
       
       if (!transcribed) {
-        await sendTelegramMessage(chat_id, "No pude entender el audio. ¿Podés enviarlo de nuevo o escribirlo?");
+        await sendTelegramMessage(chat_id, "No pude transcribir el audio. Probá enviarlo más largo y claro, o escribime el pedido.");
         return new Response("OK", { status: 200 });
       }
       text = transcribed.trim();
