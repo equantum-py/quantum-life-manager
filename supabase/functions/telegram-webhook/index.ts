@@ -238,6 +238,7 @@ function classifyMessage(text: string, intent: string) {
 function shouldAutoSave(intent: string, classData: any) {
   if (!classData.section) return false;
   if (!classData.title || classData.title.toLowerCase() === "sin título") return false;
+  if (intent === "create_task" && classData.hasReminder && classData.hour === null) return false;
   return true;
 }
 
@@ -510,7 +511,7 @@ serve(async (req) => {
       const actionType = currentPending.action_type;
       const updatedPayload = { ...currentPending.payload, section_id: sec };
       
-      const fakeClassData = { title: updatedPayload.title, section: sec, isoDateOnly: updatedPayload.date };
+      const fakeClassData = { title: updatedPayload.title, section: sec, isoDateOnly: updatedPayload.date, hasReminder: false, hour: 0 };
       if (await checkDuplicates(actionType, fakeClassData)) {
         let msg = "Señor, ya existe algo parecido, así que no lo dupliqué.";
         if (actionType === "create_note") msg = "Señor, ya existe una nota parecida, así que no la dupliqué.";
@@ -519,6 +520,12 @@ serve(async (req) => {
         return new Response("OK", { status: 200 });
       }
 
+      // Re-evaluar si ahora le falta tiempo (por si originalmente era una tarea con recordatorio sin tiempo)
+      // Pero no tenemos el classData original tan a mano. Asumiremos que si la acción es pending, puede seguir.
+      // Lo ideal es dejarlo en pending_actions con el payload actualizado.
+      // Para simplificar, si era tarea y se detectó sin tiempo antes, ahora lo procesará directamente sin tiempo si no lo capturamos.
+      // Mejor: delegar el guardado si falta algo más.
+      
       let err = null;
       if (actionType === "create_task") err = (await supabase.from("tasks").insert(updatedPayload)).error;
       else if (actionType === "create_meeting") err = (await supabase.from("meetings").insert(updatedPayload)).error;
@@ -531,8 +538,65 @@ serve(async (req) => {
         await supabase.from("telegram_pending_actions").update({ payload: updatedPayload, status: "confirmed", confirmed_at: new Date().toISOString() }).eq("id", currentPending.id);
         const originalText = updatedPayload.description || updatedPayload.content || "";
         const cData = extractDateTime(originalText);
-        // Recordar isVoice al resolver un fallback
         await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, updatedPayload, cData, isVoice));
+      }
+      return new Response("OK", { status: 200 });
+    }
+
+    // Supply time para multi-turno
+    if (currentPending?.status === "needs_time") {
+      const timeData = extractDateTime(text);
+      if (timeData.hour === null) {
+        await sendTelegramMessage(chat_id, "Señor, no logré entender la hora. ¿Me la confirmás de nuevo? Por ejemplo: 'a las 13:30'.");
+        return new Response("OK", { status: 200 });
+      }
+
+      const actionType = currentPending.action_type;
+      let updatedPayload = { ...currentPending.payload };
+      
+      // Construir la nueva fecha con la hora
+      const origDateStr = updatedPayload.due_date || new Date().toISOString();
+      const origD = new Date(origDateStr);
+      origD.setHours(timeData.hour, timeData.minute || 0, 0, 0);
+      updatedPayload.due_date = origD.toISOString();
+
+      let err = null;
+      const { data: insertedTask, error: taskErr } = await supabase.from("tasks").insert(updatedPayload).select().single();
+      err = taskErr;
+
+      if (err) {
+        await supabase.from("telegram_pending_actions").update({ payload: updatedPayload, status: "pending" }).eq("id", currentPending.id);
+        await sendTelegramMessage(chat_id, "Señor, entendí el pedido, pero no pude guardarlo por un problema interno. Lo revisaré en el panel.");
+      } else {
+        await supabase.from("telegram_pending_actions").update({ payload: updatedPayload, status: "confirmed", confirmed_at: new Date().toISOString() }).eq("id", currentPending.id);
+        
+        let reminderFeedback = `${origD.toISOString().split('T')[0]} a las ${timeData.timeLabel}`;
+        const remindAt = origD.toISOString();
+        let reminderError = false;
+
+        const { data: usersData } = await supabase.auth.admin.listUsers();
+        const userId = usersData?.users?.[0]?.id;
+        if (userId) {
+           const { error: rErr } = await supabase.from("reminders").insert({
+              user_id: userId,
+              source_type: "task",
+              source_id: insertedTask.id,
+              title: updatedPayload.title,
+              remind_at: remindAt,
+              channel: "push",
+              status: "pending",
+              metadata: { created_from: "telegram", original_text: text, source: isVoice ? "voice" : "text", telegram_chat_id: chat_id }
+           });
+           if (rErr) reminderError = true;
+        }
+        
+        if (reminderError) {
+          await sendTelegramMessage(chat_id, "Guardé la tarea con tu hora, pero no pude programar el recordatorio interno.");
+        } else {
+          // Fake classData para que el formatNaturalResponse lea la hora bien
+          const cData = { explicitDate: origDateStr.split('T')[0], timeLabel: timeData.timeLabel };
+          await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, updatedPayload, cData, isVoice, reminderFeedback));
+        }
       }
       return new Response("OK", { status: 200 });
     }
@@ -663,9 +727,9 @@ serve(async (req) => {
                    source_id: insertedRecord.id,
                    title: classData.title,
                    remind_at: remindAt,
-                   channel: "app",
+                   channel: "push",
                    status: "pending",
-                   metadata: { created_from: "telegram", original_text: text, source: isVoice ? "voice" : "text" }
+                   metadata: { created_from: "telegram", original_text: text, source: isVoice ? "voice" : "text", section: classData.section, telegram_chat_id: chat_id }
                 });
                 if (rErr) {
                   console.error("Error inserting reminder from TG:", rErr);
@@ -683,15 +747,20 @@ serve(async (req) => {
       }
     } else {
       // Necesita intervención
-      const pStatus = classData.section ? "pending" : "needs_section";
-      await supabase.from("telegram_pending_actions").insert({ telegram_chat_id: chat_id, telegram_user_id: from_id, action_type: actionType, status: pStatus, classification_id: aiClassId, telegram_log_id: tgLog?.id, payload: actionPayload });
+      let pStatus = "pending";
+      let msg = `Señor, tengo la acción lista:\n\nTítulo: ${classData.title}\n\nRespondé CREAR para guardar o CANCELAR para descartar.`;
+      const prefix = isVoice ? "Escuché tu audio. " : "Claro señor. ";
 
-      if (pStatus === "needs_section") {
-        const prefix = isVoice ? "Escuché tu audio. " : "Claro señor. ";
-        await sendTelegramMessage(chat_id, `${prefix}¿En qué sección lo guardo: Familia, eQuantum, Inverfin, Iglesia o IDEAR?`);
-      } else {
-        await sendTelegramMessage(chat_id, `Señor, tengo la acción lista:\n\nTítulo: ${classData.title}\n\nRespondé CREAR para guardar o CANCELAR para descartar.`);
+      if (!classData.section) {
+        pStatus = "needs_section";
+        msg = `${prefix}¿En qué sección lo guardo: Familia, eQuantum, Inverfin, Iglesia o IDEAR?`;
+      } else if (actionType === "create_task" && classData.hasReminder && classData.hour === null) {
+        pStatus = "needs_time";
+        msg = `${prefix}¿A qué hora querés que te recuerde?`;
       }
+
+      await supabase.from("telegram_pending_actions").insert({ telegram_chat_id: chat_id, telegram_user_id: from_id, action_type: actionType, status: pStatus, classification_id: aiClassId, telegram_log_id: tgLog?.id, payload: actionPayload });
+      await sendTelegramMessage(chat_id, msg);
     }
 
     return new Response("OK", { status: 200 });

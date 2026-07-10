@@ -81,6 +81,7 @@ El despliegue de la función `telegram-webhook` se realiza mediante **GitHub Act
 - [x] **Push Notifications (PUSH-1):** Plan documentado, SQL propuesto y UI en preparación.
 - [x] **Push Edge Function (PUSH-4):** Función `send-push-notification` lista y probada manualmente. (Push manual real validado en dispositivo móvil).
 - [x] **Push Automático (PUSH-5):** Edge Function `process-reminders` creada y Cron job `process-reminders-every-minute` habilitado. (Cron automático validado en producción con notificación real recibida en dispositivo móvil).
+- [x] **Telegram Reminders (TG-10):** El bot crea reminders con `channel: 'push'` y pregunta por hora exacta si falta (`needs_time`).
 
 *⚠️ Implementación real pendiente. Ver `docs/roadmap-v1.1.md` para el orden de ejecución.*
 - [ ] No ejecutar SQL de v1.1 sin revisión estricta de RLS.

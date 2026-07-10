@@ -16,6 +16,7 @@ El bot evalúa el mensaje entrante y detecta una de las siguientes intenciones (
 - `confirm_pending`: "CREAR" confirma la acción previa y la graba en base de datos.
 - `cancel_pending`: "CANCELAR" descarta la acción previa.
 - `supply_section`: Respuesta a estado `needs_section` para completar un requerimiento faltante.
+- `supply_time`: Respuesta a estado `needs_time` cuando una tarea con recordatorio no tiene hora definida.
 
 ## Ejemplos Reales de Interacción (Modo Natural)
 
@@ -57,10 +58,11 @@ El bot soporta audios a través de la API `getFile` de Telegram y Whisper-1 de O
 Si envías una nota de voz, el webhook descarga el audio, lo transcribe, y lo inyecta como texto en el mismo flujo clasificador anterior (detecta sección, fecha, título y recordatorios de la misma forma que con texto).
 
 ### 5. Recordatorios Autónomos (TG-10)
-Al crear una tarea o reunión por texto o voz, el bot detecta automáticamente si existe intención de recordatorio.
+Al crear una tarea o reunión por texto o voz, el bot detecta automáticamente si existe intención de recordatorio y programa el envío por notificaciones Push Automáticas (canal `push`).
+
 **Para tareas:**
 - Si especificas una hora (Ej: *"Revisar base hoy a las 19"*), se guarda automáticamente con recordatorio a esa hora.
-- Si dices *"Recordame comprar leche mañana"*, y no das hora, crea un recordatorio a las 08:00 del día siguiente.
+- Si dices *"Recordame comprar leche mañana"*, y no das hora, el bot entra en estado `needs_time` y te pregunta: *"¿A qué hora querés que te recuerde?"* hasta que respondas con un horario claro.
 
 **Para reuniones:**
 - Al decir *"Reunión con Daniel mañana a las 9 y avisame 15 minutos antes"*, programa la alarma 15 mins antes.
