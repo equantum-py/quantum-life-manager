@@ -70,6 +70,8 @@ Al crear una tarea o reunión por texto o voz, el bot detecta automáticamente s
 
 El bot elimina del título frases de alarma ("recordame", "avisame", "15 minutos antes") para mantener tu panel limpio, y luego te confirma: *"Listo señor, guardé la tarea 'X' en Y y te voy a recordar..."*
 
+✅ **Validación (TG-10/REM-4):** Telegram ya crea recordatorios push automáticos validados en dispositivo móvil real. El flujo completo (Telegram → Task → Reminder Pending → Cron → Push al celular) se encuentra operativo en producción.
+
 ### Despliegue (Deploy) de Edge Function
 El despliegue de la función `telegram-webhook` se realiza mediante **GitHub Actions** (`.github/workflows/deploy-supabase-function.yml`), el cual:
 - Permite la ejecución manual (`workflow_dispatch`).
