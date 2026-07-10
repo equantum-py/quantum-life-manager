@@ -128,6 +128,7 @@ function MobileDashboard({
   mainAlert?: any;
 }) {
   const isOrganized = overdueTasks.length === 0 && mainAlert === undefined;
+  const hasData = todayTasks.length > 0 || nextMeetings.length > 0 || overdueTasks.length > 0;
 
   return (
     <div className="space-y-8 md:hidden">
@@ -144,29 +145,37 @@ function MobileDashboard({
 
       {/* B. Hero card / resumen del día */}
       <section>
-        <div className="app-card bg-[var(--qlm-primary)] border-none text-white shadow-[var(--qlm-shadow-premium)] relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full bg-white opacity-10 blur-2xl"></div>
+        <div className="app-card border-none shadow-[var(--qlm-shadow-premium)] p-6 relative overflow-hidden">
+          <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-[var(--qlm-primary)] opacity-[0.04] blur-2xl"></div>
           
-          <h2 className="text-[22px] font-black leading-tight tracking-tight mb-4 relative z-10">
-            {isOrganized ? 'Día organizado ✨' : 'Tenés pendientes importantes'}
+          <h2 className="text-[24px] font-black leading-tight tracking-tight text-slate-900 mb-5 relative z-10">
+            {!hasData ? 'Día libre 🌴' : isOrganized ? 'Día organizado ✨' : 'Pendientes importantes'}
           </h2>
           
-          <div className="flex items-center gap-6 relative z-10">
-            <div>
-              <span className="block text-[32px] font-black leading-none">{todayTasks.length}</span>
-              <span className="text-[14px] font-semibold text-blue-100">Tareas de hoy</span>
-            </div>
-            {overdueTasks.length > 0 && (
-              <div>
-                <span className="block text-[32px] font-black leading-none text-red-300">{overdueTasks.length}</span>
-                <span className="text-[14px] font-semibold text-red-100">Vencidas</span>
+          {hasData ? (
+            <div className="flex items-center gap-8 relative z-10">
+              <div className="flex flex-col">
+                <span className="text-[40px] font-black leading-none text-[var(--qlm-primary)] mb-1">{todayTasks.length}</span>
+                <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500">Tareas</span>
               </div>
-            )}
-            <div>
-              <span className="block text-[32px] font-black leading-none">{nextMeetings.length}</span>
-              <span className="text-[14px] font-semibold text-blue-100">Reuniones</span>
+              
+              {overdueTasks.length > 0 && (
+                <div className="flex flex-col">
+                  <span className="text-[40px] font-black leading-none text-red-500 mb-1">{overdueTasks.length}</span>
+                  <span className="text-[12px] font-bold uppercase tracking-wider text-red-500">Vencidas</span>
+                </div>
+              )}
+              
+              <div className="flex flex-col">
+                <span className="text-[40px] font-black leading-none text-slate-800 mb-1">{nextMeetings.length}</span>
+                <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500">Reuniones</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="rounded-[var(--qlm-radius-md)] bg-slate-50 p-5 text-center border border-slate-100">
+              <p className="text-[15px] font-bold text-slate-500">Sin pendientes importantes por ahora.</p>
+            </div>
+          )}
         </div>
       </section>
 
