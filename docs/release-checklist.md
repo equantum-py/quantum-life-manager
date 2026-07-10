@@ -30,14 +30,17 @@
 - [x] Fallback a `CREAR`/`CANCELAR` solo para intenciones ambiguas.
 
 ## PWA
-- [x] Configuración básica: `index.html` cuenta con meta tags.
-- [x] `manifest.json` inicial creado en carpeta `public`.
+- [x] Configuración básica: `index.html` cuenta con meta tags nativos para iOS/Android y viewport config de safe areas.
+- [x] `manifest.json` inicial creado en carpeta `public` y actualizado con propiedades standalone, orientaciones y colores.
+- [x] Iconos presentes (`192`, `512`, `maskable`, `apple-touch-icon`).
+- [x] Theme color configurado en `#ffffff`.
+- [x] App instalable y usable como app nativa.
+- [x] Mobile safe areas verificados en layout y componentes.
+- [x] Rutas principales operativas sin afectar el shell de la PWA.
 
 ## Pendientes Conocidos (Futuro)
 - Conectar IA real (OpenAI/Gemini) para mejorar la detección avanzada de lenguaje natural.
-- Mejorar el panel visual de `/telegram` y limpiar datos de prueba.
-- Funciones de borrado, edición o confirmación en `/telegram` deshabilitadas.
-- Iconografía oficial PWA (PNGs variados en manifest) pendiente para fase UX/UI.
+- Funciones de borrado, edición o confirmación en `/telegram` deshabilitadas en esta fase visual.
 
 ## Pasos para probar en Producción
 1. Desplegar Front-End.

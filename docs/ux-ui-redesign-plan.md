@@ -36,7 +36,7 @@ Refinar el panel de auditoría para uso tipo app.
 - **Filtros y Logs:** Filtros tipo píldora y logs presentados como cards compactas.
 - **Acciones:** Acciones pendientes/confirmadas muy visuales.
 
-### UX-6: PWA Final
+### ~~UX-6: PWA Final~~ (COMPLETADO)
 Cerrar la brecha tecnológica para ser una App Instalable completa.
 - **Iconos Reales:** Generar y asociar todos los tamaños de iconos.
 - **Splash Screen y App Install:** Arranque nativo y prompt de instalación.
