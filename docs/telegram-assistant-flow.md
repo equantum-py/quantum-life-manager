@@ -58,3 +58,11 @@ El Asistente es capaz de escuchar notas de voz (`message.voice` o `message.audio
 - Transcribe el audio utilizando **OpenAI Whisper** (`whisper-1`).
 - Pasa el texto transcripto al flujo exacto actual.
 - Adapta su respuesta ("Escuché tu audio...") para ser más empático, manteniendo intactas las capacidades de creación de Tareas, Reuniones y Notas con auto-guardado o petición de sección.
+
+### Despliegue (Deploy) de Edge Function
+El despliegue de la función `telegram-webhook` se realiza mediante **GitHub Actions** (`.github/workflows/deploy-supabase-function.yml`), el cual:
+- Permite la ejecución manual (`workflow_dispatch`).
+- Utiliza la CLI de Supabase en Ubuntu para publicar el código al entorno productivo.
+- Requiere tener el secreto `SUPABASE_ACCESS_TOKEN` configurado en el repositorio de GitHub.
+- Requiere tener el secreto `OPENAI_API_KEY` configurado internamente en Supabase Secrets (para la función de Whisper).
+
