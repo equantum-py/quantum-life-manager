@@ -74,11 +74,13 @@ El despliegue de la función `telegram-webhook` se realiza mediante **GitHub Act
 - [ ] Limpieza ejecutada manualmente con `cleanup_test_data.sql`.
 - [ ] Rutas front-end validadas tras la purga para evitar interfaces rotas.
 
-## Próximamente (v1.1)
+## Próximamente (v1.1) - Fase de Planificación CERRADA
 - [x] **Google Calendar (CAL-1):** Planificado y esquema SQL documentado.
 - [x] **Recordatorios (REM-1):** Planificado y esquema SQL documentado.
-- [x] **Push Notifications (PUSH-1):** Plan documentado, SQL propuesto y UI en preparación. (Implementación real pendiente para PUSH-2).
-- [ ] **Google Calendar Integration:** Vincular cuenta y sincronizar agenda de manera bidireccional o desde el Asistente Telegram.
-- [ ] **Push Notifications:** Notificaciones PWA nativas para recordatorios de tareas y agenda.
-- [ ] **Recordatorios Activos:** Tareas programadas en el servidor para disparar recordatorios antes de que caduquen.
+- [x] **Push Notifications (PUSH-1):** Plan documentado, SQL propuesto y UI en preparación.
+
+*⚠️ Implementación real pendiente. Ver `docs/roadmap-v1.1.md` para el orden de ejecución.*
+- [ ] No ejecutar SQL de v1.1 sin revisión estricta de RLS.
+- [ ] No activar notificaciones push sin VAPID keys.
+- [ ] No activar Google Calendar sin OAuth seguro (Vault/Encriptación).
 
