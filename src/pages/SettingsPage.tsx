@@ -1,4 +1,4 @@
-import { Calendar } from 'lucide-react';
+import { Calendar, Bell } from 'lucide-react';
 import { authService } from '../services/authService';
 import { dataMode } from '../lib/supabaseClient';
 
@@ -41,6 +41,26 @@ export function SettingsPage() {
         >
           Conectar calendario (Próximamente)
         </button>
+      </div>
+
+      <div className="app-card space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-50 text-amber-500">
+            <Bell size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-900">Recordatorios</h3>
+            <p className="text-sm text-slate-500">Avisos de tareas y reuniones</p>
+          </div>
+        </div>
+        
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-slate-700">Estado</span>
+            <span className="app-badge bg-amber-100 text-amber-700">En preparación</span>
+          </div>
+          <p className="mt-3 text-sm text-slate-600">Próximamente vas a recibir avisos de tareas y reuniones importantes directamente en la aplicación y por notificaciones push.</p>
+        </div>
       </div>
     </div>
   );
