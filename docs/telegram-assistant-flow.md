@@ -52,12 +52,21 @@ El bot evalúa el mensaje entrante y detecta una de las siguientes intenciones (
 ## Futuro del Parser
 Actualmente las funciones `classifyMessage`, `detectIntent` y `extractDateTime` utilizan reglas duras y RegEx. En la fase de integración de IA real, toda la función `classifyMessage` será reemplazada por una llamada directa a OpenAI/Gemini que devolverá un JSON estructurado con el `actionType` y los `extractedData`. La arquitectura de estado `pending_action` se mantendrá intacta.
 
-## TG-9 Voice Notes
-El Asistente es capaz de escuchar notas de voz (`message.voice` o `message.audio`) en la fase TG-9.
-- Recibe el audio y lo descarga usando los servidores de Telegram.
-- Transcribe el audio utilizando **OpenAI Whisper** (`whisper-1`).
-- Pasa el texto transcripto al flujo exacto actual.
-- Adapta su respuesta ("Escuché tu audio...") para ser más empático, manteniendo intactas las capacidades de creación de Tareas, Reuniones y Notas con auto-guardado o petición de sección.
+### 4. Transcripción de Audio (TG-9 Voice Notes)
+El bot soporta audios a través de la API `getFile` de Telegram y Whisper-1 de OpenAI.
+Si envías una nota de voz, el webhook descarga el audio, lo transcribe, y lo inyecta como texto en el mismo flujo clasificador anterior (detecta sección, fecha, título y recordatorios de la misma forma que con texto).
+
+### 5. Recordatorios Autónomos (TG-10)
+Al crear una tarea o reunión por texto o voz, el bot detecta automáticamente si existe intención de recordatorio.
+**Para tareas:**
+- Si especificas una hora (Ej: *"Revisar base hoy a las 19"*), se guarda automáticamente con recordatorio a esa hora.
+- Si dices *"Recordame comprar leche mañana"*, y no das hora, crea un recordatorio a las 08:00 del día siguiente.
+
+**Para reuniones:**
+- Al decir *"Reunión con Daniel mañana a las 9 y avisame 15 minutos antes"*, programa la alarma 15 mins antes.
+- El tiempo por defecto de pre-aviso si solo dices *"y recordame"* es de 15 minutos.
+
+El bot elimina del título frases de alarma ("recordame", "avisame", "15 minutos antes") para mantener tu panel limpio, y luego te confirma: *"Listo señor, guardé la tarea 'X' en Y y te voy a recordar..."*
 
 ### Despliegue (Deploy) de Edge Function
 El despliegue de la función `telegram-webhook` se realiza mediante **GitHub Actions** (`.github/workflows/deploy-supabase-function.yml`), el cual:

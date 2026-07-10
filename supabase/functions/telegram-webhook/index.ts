@@ -97,9 +97,21 @@ function detectIntent(text: string) {
     lowerText.includes("guardar nota") ||
     lowerText.includes("guardar idea")
   ) return "create_note";
-  if (lowerText.includes("recordar") || lowerText.includes("recordarme")) return "create_reminder";
   
   return "create_task";
+}
+
+function detectReminderIntent(text: string): boolean {
+  const lower = text.toLowerCase();
+  return lower.includes("recordar") || 
+         lower.includes("recordame") || 
+         lower.includes("recuérdame") || 
+         lower.includes("avisame") || 
+         lower.includes("avisar") || 
+         lower.includes("alarma") || 
+         lower.includes("notificarme") || 
+         lower.includes("minutos antes") ||
+         lower.includes("hora antes");
 }
 
 function detectSection(text: string) {
@@ -172,9 +184,12 @@ function cleanTitle(text: string, intent: string) {
   } else {
     t = t.replace(/^(equantum|eQuantum|familia|iglesia|inverfin|idear)\s+/i, "");
     t = t.replace(/\b(mañana|hoy|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo|recordar|recordarme|el)\b/ig, "");
+    t = t.replace(/\b(recordame|avisame|recuérdame|alarma|notificarme)\b/ig, "");
     t = t.replace(/\b(tengo|una|agenda|agendar|para las|a las|en)\b/ig, "");
     t = t.replace(/\b(para las|a las)\s*\d{1,2}(:\d{2})?\b/ig, "");
     t = t.replace(/\b\d{1,2}(:\d{2})?\s*hs\b/ig, "");
+    t = t.replace(/\b(15|30|45|60)\s*(minutos|mins|min)\s*antes\b/ig, "");
+    t = t.replace(/\b(1|una)\s*hora\s*antes\b/ig, "");
   }
 
   t = t.replace(/✅/g, "");
@@ -214,9 +229,10 @@ function classifyMessage(text: string, intent: string) {
   if (lower.includes("urgente") || lower.includes("asap")) priority = "Urgente";
   else if (lower.includes("importante")) priority = "Alta";
 
+  const hasReminder = detectReminderIntent(text);
   const title = cleanTitle(text, intent);
 
-  return { section, title, priority, ...dateTime };
+  return { section, title, priority, hasReminder, ...dateTime };
 }
 
 function shouldAutoSave(intent: string, classData: any) {
@@ -243,12 +259,13 @@ async function checkDuplicates(actionType: string, classData: any) {
   return false;
 }
 
-function formatNaturalResponse(actionType: string, payload: any, classData: any = null, isVoice: boolean = false) {
+function formatNaturalResponse(actionType: string, payload: any, classData: any = null, isVoice: boolean = false, reminderStr: string = "") {
   const sec = capitalize(payload.section_id);
   const rawTitle = payload.title;
   const prefix = isVoice ? "Escuché tu audio. " : "Listo señor, ";
   const altPrefix = isVoice ? "Escuché tu audio. Agendé" : "Listo señor, agendé";
   const savePrefix = isVoice ? "Escuché tu audio. Guardé" : "Listo señor, guardé";
+  const rmSuffix = reminderStr ? ` y te voy a recordar ${reminderStr}` : "";
 
   if (actionType === "create_note") {
     return `${prefix}guardé la nota sobre ${rawTitle.toLowerCase()} en ${sec}.`;
@@ -260,14 +277,14 @@ function formatNaturalResponse(actionType: string, payload: any, classData: any 
     if (t.toLowerCase().startsWith("reunión ")) {
       t = t.substring(8).trim();
     }
-    return `${altPrefix} la reunión ${t} para ${d} a las ${h} en ${sec}.`;
+    return `${altPrefix} la reunión ${t} para ${d} a las ${h} en ${sec}${rmSuffix}.`;
   }
   
   // Tasks / Reminders
   const d = classData?.explicitDate || (payload.due_date ? payload.due_date.split('T')[0] : "hoy");
-  const timeStr = classData?.timeLabel || (payload.due_date ? payload.due_date.split('T')[1]?.slice(0, 5) : "");
+  const timeStr = classData?.timeLabel || (payload.due_date && payload.due_date.includes('T') ? payload.due_date.split('T')[1].slice(0, 5) : "");
   const h = (timeStr && timeStr !== "00:00") ? ` a las ${timeStr}` : "";
-  return `${savePrefix} la tarea "${payload.title}" para ${d}${h} en ${sec}.`;
+  return `${savePrefix} la tarea '${payload.title}' en ${sec}${rmSuffix ? rmSuffix : (h ? ` para ${d}${h}` : ` para ${d}`)}.`;
 }
 
 // ==========================================
@@ -522,8 +539,7 @@ serve(async (req) => {
 
     // Nuevo comando regular
     const classData = classifyMessage(text, intent);
-    let actionType = intent; 
-    if (intent === 'create_reminder') actionType = 'create_task';
+    let actionType = intent;
 
     // Anti-dupes
     if (classData.section && await checkDuplicates(actionType, classData)) {
@@ -592,16 +608,78 @@ serve(async (req) => {
 
     if (shouldAutoSave(intent, classData)) {
       let err = null;
-      if (actionType === "create_task") err = (await supabase.from("tasks").insert(actionPayload)).error;
-      else if (actionType === "create_meeting") err = (await supabase.from("meetings").insert(actionPayload)).error;
-      else if (actionType === "create_note") err = (await supabase.from("notes").insert(actionPayload)).error;
+      let insertedRecord = null;
+      
+      if (actionType === "create_task") {
+        const { data, error } = await supabase.from("tasks").insert(actionPayload).select().single();
+        err = error;
+        insertedRecord = data;
+      } else if (actionType === "create_meeting") {
+        const { data, error } = await supabase.from("meetings").insert(actionPayload).select().single();
+        err = error;
+        insertedRecord = data;
+      } else if (actionType === "create_note") {
+        err = (await supabase.from("notes").insert(actionPayload)).error;
+      }
 
       if (err) {
         await supabase.from("telegram_pending_actions").insert({ telegram_chat_id: chat_id, telegram_user_id: from_id, action_type: actionType, status: "pending", classification_id: aiClassId, telegram_log_id: tgLog?.id, payload: actionPayload });
         await sendTelegramMessage(chat_id, "Señor, entendí el pedido, pero no pude guardarlo por un problema interno. Quedó pendiente.");
       } else {
         await supabase.from("telegram_pending_actions").insert({ telegram_chat_id: chat_id, telegram_user_id: from_id, action_type: actionType, status: "confirmed", confirmed_at: new Date().toISOString(), classification_id: aiClassId, telegram_log_id: tgLog?.id, payload: actionPayload });
-        await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, actionPayload, classData, isVoice));
+        
+        let reminderFeedback = "";
+        let reminderError = false;
+        
+        // Reminder Logic
+        if (insertedRecord && (classData.hour !== null || classData.hasReminder)) {
+           let remindAt = null;
+           if (actionType === "create_task") {
+              if (classData.hour !== null) {
+                remindAt = classData.isoDateTime;
+                reminderFeedback = `${classData.explicitDate} a las ${classData.timeLabel}`;
+              } else if (classData.hasReminder && classData.explicitDate) {
+                const d = new Date(classData.isoDateTime);
+                d.setHours(8,0,0,0);
+                remindAt = d.toISOString();
+                reminderFeedback = `${classData.explicitDate} a las 08:00`;
+              }
+           } else if (actionType === "create_meeting") {
+              const d = new Date(classData.isoDateTime);
+              let subtractMins = 15;
+              if (text.toLowerCase().includes("1 hora antes") || text.toLowerCase().includes("una hora antes")) subtractMins = 60;
+              d.setMinutes(d.getMinutes() - subtractMins);
+              remindAt = d.toISOString();
+              reminderFeedback = `${subtractMins} minutos antes`;
+           }
+           
+           if (remindAt) {
+             const { data: usersData } = await supabase.auth.admin.listUsers();
+             const userId = usersData?.users?.[0]?.id;
+             if (userId) {
+                const { error: rErr } = await supabase.from("reminders").insert({
+                   user_id: userId,
+                   source_type: actionType === "create_task" ? "task" : "meeting",
+                   source_id: insertedRecord.id,
+                   title: classData.title,
+                   remind_at: remindAt,
+                   channel: "app",
+                   status: "pending",
+                   metadata: { created_from: "telegram", original_text: text, source: isVoice ? "voice" : "text" }
+                });
+                if (rErr) {
+                  console.error("Error inserting reminder from TG:", rErr);
+                  reminderError = true;
+                }
+             }
+           }
+        }
+        
+        if (reminderError) {
+          await sendTelegramMessage(chat_id, "Guardé la tarea, pero no pude crear el recordatorio.");
+        } else {
+          await sendTelegramMessage(chat_id, formatNaturalResponse(actionType, actionPayload, classData, isVoice, reminderFeedback));
+        }
       }
     } else {
       // Necesita intervención
